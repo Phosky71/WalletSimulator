@@ -1,0 +1,13 @@
+Clave secreta JWT: La clave secreta para firmar los tokens JWT (your_jwt_secret) debería estar almacenada en un archivo de configuración seguro como .env y no en el código fuente.
+
+Expiración del token: Actualmente, el token expira en una hora (expiresIn: 3600). Considera implementar la funcionalidad de refrescar el token para mantener la sesión activa sin necesidad de que el usuario vuelva a iniciar sesión.
+
+Verificación del token: En authRoutes.js, la verificación del token se realiza en cada solicitud. Podrías crear un middleware para centralizar esta lógica y reutilizarla en todas las rutas que necesiten autenticación.
+
+Manejo de errores: Asegúrate de manejar todos los posibles errores, especialmente en las operaciones asíncronas, para evitar que el servidor se caiga.
+
+Uso de HTTPS: Asegúrate de que todas las solicitudes que manejan tokens JWT se realicen a través de HTTPS para evitar la intercepción de tokens.
+
+Almacenamiento del token: Almacenar el token en localStorage puede ser vulnerable a ataques XSS. Considera almacenar el token en cookies seguras con la bandera HttpOnly.
+
+puedes entonces arreglar login.js para dejar de utilizar localstorage.getItem('token') en la linea 10

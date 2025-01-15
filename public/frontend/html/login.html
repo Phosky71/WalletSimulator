@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/frontend/css/check.css">
+    <script src="/frontend/js/login.js" defer></script>
+    <title>Login & Register</title>
+
+    <style>
+        body {
+            background: #eee;
+        }
+
+        .form-control {
+            border-radius: 30px;
+        }
+
+        .btn {
+            border-radius: 30px;
+        }
+
+        .modal-content {
+            border-radius: 30px;
+            animation-duration: 1s;
+        }
+
+        .modal-header {
+            align-items: center;
+        }
+
+        .success-icon {
+            color: #28a745;
+            font-size: 50px;
+        }
+
+        .error-icon {
+            color: #dc3545;
+            font-size: 50px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.9);">
+            <div class="modal-header justify-content-center">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+            <div class="modal-body" id="successModalContent"></div>
+            <div class="modal-footer justify-content-center"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.9);">
+            <div class="modal-header justify-content-center">
+                <h4 class="modal-title text-danger" id="errorModalLongTitle"><i class="fas fa-times"></i> Error</h4>
+            </div>
+            <div class="modal-body error-modal-content" id="errorModalContent"></div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Ok</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal" tabindex="-1" role="dialog" id="loadingModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login & Register -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <!--Login form-->
+            <div id="loginForm">
+                <h2 class="text-center mb-4">Login</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <input type="email" class="form-control" id="loginEmail" placeholder="Email">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" id="loginPassword" placeholder="Password">
+                            </div>
+                            <button type="button" class="btn btn-dark btn-block" id="loginButton">Login</button>
+                        </form>
+                        <p class="text-center mt-3">
+                            <a href="#" id="showRegisterFormLink">Don't have an account? Register</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!--Register form (hidden initially)-->
+            <div id="registerForm" style="display: none;">
+                <h2 class="text-center mb-4">Register</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="registerUsername" placeholder="Username">
+                            </div>
+                            <div class="form-group">
+                                <input type="email" class="form-control" id="registerEmail" placeholder="Email">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" id="registerPassword"
+                                       placeholder="Password">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" id="registerConfirmPassword"
+                                       placeholder="Confirm Password">
+                            </div>
+                            <div id="registerError" class="alert alert-danger" style="display: none;"></div>
+                            <button type="button" class="btn btn-dark btn-block" id="registerButton">Register</button>
+                        </form>
+                        <p class="text-center mt-3">
+                            <a href="#" id="showLoginFormLink">Already have an account? Login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+</body>
+</html>
