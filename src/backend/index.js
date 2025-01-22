@@ -15,7 +15,7 @@ app.use(cookieParser());
 
 // Configuración del body-parser
 app.use(bodyParser.json());
-app.use(express.static('public/frontend'));
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
     res.redirect('/login');
