@@ -147,7 +147,7 @@ async function logout() {
     });
     if (response.ok) {
         // Redirigir al usuario a la página de inicio de sesión
-        window.location.href = '/login.html';
+        window.location.href = '/frontend/html/login.html';
     } else {
         console.error('Failed to log out');
     }
