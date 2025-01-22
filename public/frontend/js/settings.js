@@ -74,8 +74,6 @@ async function fetchUserSettings() {
     }
 }
 
-fun
-
 // function applyUserSettings(settings) {
 //     if (settings.autoAddCrypto !== undefined) {
 //         document.getElementById('autoAddCrypto').checked = settings.autoAddCrypto;
