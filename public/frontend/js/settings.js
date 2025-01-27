@@ -84,6 +84,7 @@ document.getElementById('logoutButton').addEventListener('click', async function
         });
 
         if (response.ok) {
+            document.cookie = 'token=; Max-Age=0; path=/;';
             window.location.href = '/frontend/html/login.html';
         } else {
             throw new Error('Failed to log out');
@@ -93,6 +94,7 @@ document.getElementById('logoutButton').addEventListener('click', async function
     }
 });
 
+// public/frontend/js/settings.js
 document.getElementById('deleteUserButton').addEventListener('click', async function () {
     if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
         try {
