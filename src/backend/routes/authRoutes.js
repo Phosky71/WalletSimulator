@@ -66,7 +66,11 @@ router.get('/verifyToken', function (req, res) {
 });
 
 router.post('/logout', auth, (req, res) => {
-    req.session.destroy(() => {
+    res.clearCookie('token');
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).send('Failed to log out');
+        }
         res.redirect('/login');
     });
 });

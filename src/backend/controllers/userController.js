@@ -75,8 +75,14 @@ exports.getUserSettings = async (req, res) => {
 // Eliminar usuario
 exports.deleteUserProfile = async (req, res) => {
     try {
-        await User.findOneAndRemove({publicAddress: req.user.publicAddress});
-        res.json({msg: 'User deleted'});
+        res.clearCookie('token');
+        req.session.destroy(async (err) => {
+            if (err) {
+                return res.status(500).send('Failed to log out');
+            }
+            await User.findOneAndRemove({publicAddress: req.user.publicAddress});
+            res.json({msg: 'User deleted'});
+        });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

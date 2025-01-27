@@ -79,13 +79,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.post('/logout', auth, (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login'); // Redireccionar al login tras cerrar la sesión
-    });
-});
-
-
 // Obtener detalles del usuario actual
 router.get('/me', auth, getUserDetails);
 
