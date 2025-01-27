@@ -74,6 +74,48 @@ async function fetchUserSettings() {
     }
 }
 
+document.getElementById('logoutButton').addEventListener('click', async function () {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            window.location.href = '/frontend/html/login.html';
+        } else {
+            throw new Error('Failed to log out');
+        }
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+});
+
+document.getElementById('deleteUserButton').addEventListener('click', async function () {
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        try {
+            const token = await getToken();
+            const response = await fetch('/api/users/me', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                window.location.href = '/frontend/html/login.html';
+            } else {
+                throw new Error('Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+        }
+    }
+});
+
 // function applyUserSettings(settings) {
 //     if (settings.autoAddCrypto !== undefined) {
 //         document.getElementById('autoAddCrypto').checked = settings.autoAddCrypto;
