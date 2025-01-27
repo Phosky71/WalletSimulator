@@ -65,5 +65,11 @@ router.get('/verifyToken', function (req, res) {
     }
 });
 
+router.post('/logout', auth, (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+});
+
 router.use(auth);
 module.exports = router;
