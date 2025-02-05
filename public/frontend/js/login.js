@@ -98,31 +98,35 @@ async function register() {
     }
 
     if (username && email && password) {
-        const response = await fetch('/api/users/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-                // 'Authorization': 'Bearer ' + localStorage.getItem('token')
-            },
-            body: JSON.stringify({username, email, password})
-        });
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('publicAddress', data.publicAddress);
+        try {
+            const response = await fetch('/api/users/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // 'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify({username, email, password})
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('publicAddress', data.publicAddress);
 
-            // Mostrar modal con check
-            $('#successModal').modal('show');
+                // Mostrar modal con check
+                $('#successModal').modal('show');
 
-            // Esperar 2 segundos, luego ocultar el modal y mostrar el formulario de inicio de sesión
-            setTimeout(function () {
-                $('#successModal').modal('hide');
-                showLoginForm();
-            }, 2000);
-        } else {
-            // Si la respuesta no es exitosa, muestra el modal de error
-            const errorData = await response.json();
-            document.getElementById('errorModalContent').textContent = errorData.msg;
-            $('#errorModal').modal('show');
+                // Esperar 2 segundos, luego ocultar el modal y mostrar el formulario de inicio de sesión
+                setTimeout(function () {
+                    $('#successModal').modal('hide');
+                    showLoginForm();
+                }, 2000);
+            } else {
+                // Si la respuesta no es exitosa, muestra el modal de error
+                const errorData = await response.json();
+                document.getElementById('errorModalContent').textContent = errorData.msg;
+                $('#errorModal').modal('show');
+            }
+        } catch (error) {
+            displayError('Registration failed. Please try again.');
         }
     } else {
         displayError('Please fill in all fields');
