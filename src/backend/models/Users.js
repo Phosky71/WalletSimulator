@@ -8,6 +8,16 @@ const UserSchema = new mongoose.Schema({
     password: {type: String, required: true},
     publicAddress: {type: String, required: true, unique: true},
     settings: {type: mongoose.Schema.Types.Mixed, default: false},
+    balanceHistory: [{
+        date: {
+            type: Date,
+            default: Date.now
+        },
+        balance: {
+            type: Number,
+            required: true
+        }
+    }],
 });
 
 // Hash de contraseña antes de guardar el usuario

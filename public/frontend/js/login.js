@@ -91,7 +91,7 @@ async function register() {
     }
 
     const emailDomain = email.split('@')[1];
-    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']; // Añade aquí los dominios permitidos
+    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'alu.murciaeduca.es', 'aluold.murciaeduca.es'];
     if (!allowedDomains.includes(emailDomain)) {
         displayError('Invalid email domain');
         return;

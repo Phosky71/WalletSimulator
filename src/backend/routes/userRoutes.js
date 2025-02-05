@@ -48,7 +48,7 @@ router.post('/register', generatePublicAddress, async (req, res) => {
     }
 });
 
-// Login de usuario
+
 // Login de usuario
 router.post('/login', async (req, res) => {
     const {email, password} = req.body;
@@ -76,6 +76,26 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
+    }
+});
+
+router.post('/updateBalance', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        user.balanceHistory.push({ balance: req.body.balance });
+        await user.save();
+        res.status(200).json({ msg: 'Balance updated' });
+    } catch (err) {
+        res.status(500).json({ msg: 'Server error' });
+    }
+});
+
+router.get('/balanceHistory', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        res.status(200).json(user.balanceHistory);
+    } catch (err) {
+        res.status(500).json({ msg: 'Server error' });
     }
 });
 

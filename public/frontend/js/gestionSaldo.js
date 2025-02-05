@@ -645,11 +645,15 @@ async function updateTotalBalance() {
             }
         }
 
-        const portfolioValues = JSON.parse(localStorage.getItem('portfolioValues')) || [];
-        const currentDate = new Date().toISOString().split('T')[0];
-        portfolioValues.push({date: currentDate, value: totalBalance.toFixed(2)});
-
-        localStorage.setItem('portfolioValues', JSON.stringify(portfolioValues));
+        // Guardar el balance en la base de datos
+        await fetch('/api/users/updateBalance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({balance: totalBalance.toFixed(2)})
+        });
 
         document.getElementById('totalBalance').innerText = totalBalance.toFixed(4);
     } else {
@@ -997,7 +1001,7 @@ async function displayPortfolioValueChart() {
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
 
     const labels = aggregatedValues.map(entry => entry.date);
-    const data = aggregatedValues.map(entry => parseFloat(entry.value)); // Ensure values are numbers
+    const data = aggregatedValues.map(entry => parseFloat(entry.value));
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
@@ -1048,5 +1052,19 @@ async function displayPortfolioValueChart() {
 }
 
 async function fetchPortfolioValues() {
-    return JSON.parse(localStorage.getItem('portfolioValues')) || [];
+    const token = await getToken();
+    const response = await fetch('/api/users/balanceHistory', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (response.ok) {
+        return await response.json();
+    } else {
+        console.error('Failed to fetch portfolio values');
+        return [];
+    }
 }

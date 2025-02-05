@@ -88,7 +88,7 @@ document.getElementById('logoutButton').addEventListener('click', async function
             window.location.href = '/frontend/html/login.html';
         } else {
             throw new Error('Failed to log out');
-        }
+        }DF
     } catch (error) {
         console.error('Error logging out:', error);
     }
@@ -96,7 +96,7 @@ document.getElementById('logoutButton').addEventListener('click', async function
 
 // public/frontend/js/settings.js
 document.getElementById('deleteUserButton').addEventListener('click', async function () {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+    if (confirm('Estás seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
         try {
             const token = await getToken();
             const response = await fetch('/api/users/me', {
