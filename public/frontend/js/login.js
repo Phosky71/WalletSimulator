@@ -96,9 +96,10 @@ async function register() {
         displayError('Invalid email domain');
         return;
     }
-
+    console.log('Registering user');
     if (username && email && password) {
         try {
+            console.log('Fetching /api/users/register');
             const response = await fetch('/api/users/register', {
                 method: 'POST',
                 headers: {
@@ -107,6 +108,7 @@ async function register() {
                 },
                 body: JSON.stringify({username, email, password})
             });
+            console.log(response);
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('publicAddress', data.publicAddress);
