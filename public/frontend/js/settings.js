@@ -88,7 +88,8 @@ document.getElementById('logoutButton').addEventListener('click', async function
             window.location.href = '/frontend/html/login.html';
         } else {
             throw new Error('Failed to log out');
-        }DF
+        }
+        DF
     } catch (error) {
         console.error('Error logging out:', error);
     }
@@ -110,7 +111,8 @@ document.getElementById('deleteUserButton').addEventListener('click', async func
             if (response.ok) {
                 window.location.href = '/frontend/html/login.html';
             } else {
-                throw new Error('Failed to delete user');
+                const errorData = await response.json();
+                throw new Error(`Failed to delete user: ${errorData.message}`);
             }
         } catch (error) {
             console.error('Error deleting user:', error);
