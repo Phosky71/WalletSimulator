@@ -638,7 +638,7 @@ async function updateTotalBalance() {
 
         for (const crypto of userCryptos) {
             if (crypto.symbol === 'EUR') {
-                totalBalance += crypto.amount * 1.09;
+                totalBalance += crypto.amount * 1.09; // Asegúrate de que este cálculo sea correcto
             } else {
                 const cryptoValue = await fetchCryptoValue(crypto.uid);
                 totalBalance += crypto.amount * cryptoValue;
@@ -646,7 +646,7 @@ async function updateTotalBalance() {
         }
 
         // Guardar el balance en la base de datos
-        await fetch('/api/users/updateBalance', {
+        const updateResponse = await fetch('/api/users/updateBalance', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -655,7 +655,11 @@ async function updateTotalBalance() {
             body: JSON.stringify({balance: totalBalance.toFixed(2)})
         });
 
-        document.getElementById('totalBalance').innerText = totalBalance.toFixed(4);
+        if (updateResponse.ok) {
+            document.getElementById('totalBalance').innerText = totalBalance.toFixed(4);
+        } else {
+            console.error('Failed to update balance in the database');
+        }
     } else {
         console.error('Failed to fetch user cryptocurrencies');
     }

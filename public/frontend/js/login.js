@@ -109,6 +109,7 @@ async function register() {
                 body: JSON.stringify({username, email, password})
             });
             console.log(response);
+            //TODO: No hay respuesta
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('publicAddress', data.publicAddress);

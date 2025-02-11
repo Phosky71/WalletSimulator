@@ -3,7 +3,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const auth = require('../routes/authRoutes.js');
-const { getUserDetails, updateUserProfile, deleteUserProfile } = require('../controllers/userController');
+const {getUserDetails, updateUserProfile, deleteUserProfile} = require('../controllers/userController');
 const User = require('../models/Users.js');
 const router = express.Router();
 const {generatePublicAddress} = require('../middlewares/address.js');
@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
     const {email, password} = req.body;
     console.log(req.body);
     try {
-        let user = await User.findOne({ email });
+        let user = await User.findOne({email});
         console.log("user");
         console.log(user);
         if (!user) return res.status(400).json({msg: 'Invalid Credentials'});
@@ -81,12 +81,20 @@ router.post('/login', async (req, res) => {
 
 router.post('/updateBalance', auth, async (req, res) => {
     try {
+        const {balance} = req.body;
         const user = await User.findById(req.user.id);
-        user.balanceHistory.push({ balance: req.body.balance });
+
+        if (!user) {
+            return res.status(404).json({msg: 'User not found'});
+        }
+
+        user.balanceHistory.push({date: new Date(), balance});
         await user.save();
-        res.status(200).json({ msg: 'Balance updated' });
+
+        res.json({msg: 'Balance updated successfully'});
     } catch (err) {
-        res.status(500).json({ msg: 'Server error' });
+        console.error(err.message);
+        res.status(500).send('Server error');
     }
 });
 
@@ -95,7 +103,7 @@ router.get('/balanceHistory', auth, async (req, res) => {
         const user = await User.findById(req.user.id);
         res.status(200).json(user.balanceHistory);
     } catch (err) {
-        res.status(500).json({ msg: 'Server error' });
+        res.status(500).json({msg: 'Server error'});
     }
 });
 
