@@ -80,8 +80,15 @@ exports.deleteUserProfile = async (req, res) => {
             if (err) {
                 return res.status(500).send('Failed to log out');
             }
-            await User.findOneAndRemove({publicAddress: req.user.publicAddress});
-            res.json({msg: 'User deleted'});
+
+            const user = await User.findOneAndDelete({ publicAddress: req.user.publicAddress });
+
+            if (user) {
+                await Crypto.deleteMany({ user: user._id });
+                // await Transaction.deleteMany({ $or: [{ userFrom: user._id }, { userTo: user._id }] });
+            }
+
+            res.json({ msg: 'User and related data deleted' });
         });
     } catch (err) {
         console.error(err.message);
