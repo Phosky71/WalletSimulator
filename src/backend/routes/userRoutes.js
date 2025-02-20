@@ -35,7 +35,7 @@ router.post('/register', generatePublicAddress, async (req, res) => {
         user = new User({username, email, password, publicAddress});
         await user.save();
 
-        res.status(201);
+        res.location(`/api/users/${user._id}`).sendStatus(201);
     } catch (err) {
         console.error(err.message);
         if (res.statusCode === 400 && err.message.includes('User')) {
