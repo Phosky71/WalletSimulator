@@ -1002,7 +1002,9 @@ function aggregatePortfolioValues(portfolioValues) {
 
 async function displayPortfolioValueChart() {
     const portfolioValues = await fetchPortfolioValues();
+    console.log(portfolioValues);
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
+    console.log(aggregatedValues);
 
     const labels = aggregatedValues.map(entry => entry.date);
     const data = aggregatedValues.map(entry => parseFloat(entry.value));
