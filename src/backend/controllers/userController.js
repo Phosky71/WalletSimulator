@@ -16,7 +16,7 @@ exports.getUserDetails = async (req, res) => {
 
 // Actualizar perfil del usuario
 exports.updateUserProfile = async (req, res) => {
-    const {name, bio, password} = req.body;
+    const { name, bio, password, balance } = req.body;
 
     // Construir objeto de perfil
     const profileFields = {};
@@ -28,18 +28,34 @@ exports.updateUserProfile = async (req, res) => {
     }
 
     try {
-        let user = await User.findOne({publicAddress: req.user.publicAddress});
+        let user = await User.findOne({ publicAddress: req.user.publicAddress });
 
         if (!user) {
-            return res.status(404).json({msg: 'User not found'});
+            return res.status(404).json({ msg: 'User not found' });
         }
 
         // Actualizar usuario
         user = await User.findOneAndUpdate(
-            {publicAddress: req.user.publicAddress},
-            {$set: profileFields},
-            {new: true}
+            { publicAddress: req.user.publicAddress },
+            { $set: profileFields },
+            { new: true }
         ).select('-password');
+
+        // Actualizar balance
+        if (balance !== undefined) {
+            const today = new Date().toISOString().split('T')[0]; // Obtener la fecha de hoy en formato YYYY-MM-DD
+            const existingBalance = user.balanceHistory.find(entry => entry.date.toISOString().split('T')[0] === today);
+
+            if (existingBalance) {
+                // Calcular la nueva media
+                existingBalance.balance = (existingBalance.balance + balance) / 2;
+            } else {
+                // Añadir nuevo balance
+                user.balanceHistory.push({ date: new Date(), balance });
+            }
+
+            await user.save();
+        }
 
         res.json(user);
     } catch (err) {

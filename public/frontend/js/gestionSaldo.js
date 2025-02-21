@@ -983,8 +983,8 @@ function aggregatePortfolioValues(portfolioValues) {
     const aggregatedValues = {};
 
     portfolioValues.forEach(entry => {
-        const date = entry.date;
-        const value = parseFloat(entry.value);
+        const date = entry.date.split('T')[0]; // Obtener solo la fecha en formato YYYY-MM-DD
+        const value = parseFloat(entry.balance);
 
         if (aggregatedValues[date]) {
             aggregatedValues[date].sum += value;
