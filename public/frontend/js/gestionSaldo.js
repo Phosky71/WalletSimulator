@@ -1002,12 +1002,10 @@ function aggregatePortfolioValues(portfolioValues) {
 
 async function displayPortfolioValueChart() {
     const portfolioValues = await fetchPortfolioValues();
-    console.log(portfolioValues);
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
-    console.log(aggregatedValues);
 
-    const labels = aggregatedValues.map(entry => entry.date);
-    const data = aggregatedValues.map(entry => parseFloat(entry.value));
+    const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
+    const data = aggregatedValues.map(entry => parseFloat(entry.balance));
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
@@ -1017,8 +1015,8 @@ async function displayPortfolioValueChart() {
             datasets: [{
                 label: 'Portfolio Value',
                 data: data,
-                borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
                 fill: true
             }]
         },
@@ -1029,14 +1027,10 @@ async function displayPortfolioValueChart() {
                     display: true,
                     position: 'top'
                 },
-                tooltip: {
-                    callbacks: {
-                        label: function (tooltipItem) {
-                            const value = parseFloat(tooltipItem.raw);
-                            return `$${value.toFixed(2)}`;
-                        }
-                    }
-                }
+                // tooltip: {
+                //     callbacks: {
+                //     }
+                // }
             },
             scales: {
                 x: {
@@ -1050,7 +1044,9 @@ async function displayPortfolioValueChart() {
                         display: true,
                         text: 'Value ($)'
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    min: 0,
+                    max: Math.max(...data) + 5 
                 }
             }
         }
