@@ -1001,8 +1001,11 @@ function aggregatePortfolioValues(portfolioValues) {
 }
 
 async function displayPortfolioValueChart() {
+    console.log('Displaying portfolio value chart');
     const portfolioValues = await fetchPortfolioValues();
+    console.log(portfolioValues);
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
+    console.log(aggregatedValues);
 
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
@@ -1046,7 +1049,7 @@ async function displayPortfolioValueChart() {
                     },
                     beginAtZero: true,
                     min: 0,
-                    max: Math.max(...data) + 5 
+                    max: Math.max(...data) + 5
                 }
             }
         }
