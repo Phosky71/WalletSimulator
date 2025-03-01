@@ -138,130 +138,48 @@ router.post('/cryptocurrencies', auth, async (req, res) => {
     }
 });
 
-// Enviar tokens entre usuarios
-router.post('/send', auth, [
-    check('symbol', 'Symbol is required').not().isEmpty(),
-    check('amount', 'Amount is required').isNumeric(),
-    check('receiverAddress', 'Receiver address is required').not().isEmpty()
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { symbol, amount, receiverAddress } = req.body;
-
-    try {
-        const session = await Crypto.startSession();
-        session.startTransaction();
-
-        const senderCrypto = await Crypto.findOne({ user: req.user.id, symbol }).session(session);
-        if (!senderCrypto || senderCrypto.amount < amount) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(400).json({ msg: 'Insufficient funds or cryptocurrency not found' });
-        }
-
-        const receiverUser = await User.findOne({ publicAddress: receiverAddress }).session(session);
-        if (!receiverUser) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(404).json({ msg: 'Receiver not found' });
-        }
-
-        let receiverCrypto = await Crypto.findOne({ user: receiverUser.id, symbol }).session(session);
-        if (!receiverCrypto) {
-            receiverCrypto = new Crypto({
-                user: receiverUser.id,
-                symbol,
-                amount: 0
-            });
-        }
-
-        senderCrypto.amount -= amount;
-        receiverCrypto.amount += amount;
-
-        await senderCrypto.save({ session });
-        await receiverCrypto.save({ session });
-
-        // Verificar si el receptor tiene habilitada la opción autoAddCrypto
-        if (receiverUser.settings.autoAddCrypto) {
-            await receiverCrypto.save({ session });
-        }
-
-        // Generar un hash único
-        let hash;
-        let hashExists = true;
-        while (hashExists) {
-            hash = crypto.createHash('sha256').update(Date.now().toString() + req.user.id).digest('hex');
-            hashExists = await Transaction.findOne({ hash }).session(session);
-        }
-
-        const transaction = new Transaction({
-            hash,
-            userFrom: req.user.id,
-            userTo: receiverUser.id,
-            symbol,
-            toToken: 'SEND',
-            fromAmount: amount,
-            toAmount: amount,
-            type: 'send'
-        });
-
-        await transaction.save({ session });
-
-        await session.commitTransaction();
-        await session.endSession();
-
-        res.json({ msg: 'Transaction successful', transaction });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
 module.exports = router;
 
-//Cambiar criptomonedas
-router.post('/exchange', auth, async (req, res) => {
-    const {fromToken, toToken, amount} = req.body;
-
-    try {
-        // Obtener cotizaciones de la API de Coinranking
-        const response = await axios.get('https://api.coinranking.com/v2/coins', {
-            headers: {
-                'x-access-token': process.env.COINRANKING_API_KEY
-            }
-        });
-
-        const coins = response.data.data.coins;
-        const fromCrypto = fromToken !== 'EUR' ? coins.find(coin => coin.uuid === fromToken) : {
-            price: 1.09,
-            symbol: 'EUR'
-        };
-        const toCrypto = toToken !== 'EUR' ? coins.find(coin => coin.uuid === toToken) : {price: 1.09, symbol: 'EUR'};
-
-        if ((!fromCrypto && fromToken !== 'EUR') || (!toCrypto && toToken !== 'EUR')) {
-            return res.status(404).json({msg: 'Cryptocurrency not found'});
-        }
-
-        const fromPrice = fromCrypto.price;
-        const toPrice = toCrypto.price;
-
-        const exchangeRate = fromPrice / toPrice;
-        const exchangedAmount = amount * exchangeRate;
-
-        res.json({
-            fromToken: {symbol: fromCrypto.symbol, price: fromPrice},
-            toToken: {symbol: toCrypto.symbol, price: toPrice},
-            exchangeRate,
-            exchangedAmount
-        });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
+// //Cambiar criptomonedas
+// router.post('/exchange', auth, async (req, res) => {
+//     const {fromToken, toToken, amount} = req.body;
+//
+//     try {
+//         // Obtener cotizaciones de la API de Coinranking
+//         const response = await axios.get('https://api.coinranking.com/v2/coins', {
+//             headers: {
+//                 'x-access-token': process.env.COINRANKING_API_KEY
+//             }
+//         });
+//
+//         const coins = response.data.data.coins;
+//         const fromCrypto = fromToken !== 'EUR' ? coins.find(coin => coin.uuid === fromToken) : {
+//             price: 1.09,
+//             symbol: 'EUR'
+//         };
+//         const toCrypto = toToken !== 'EUR' ? coins.find(coin => coin.uuid === toToken) : {price: 1.09, symbol: 'EUR'};
+//
+//         if ((!fromCrypto && fromToken !== 'EUR') || (!toCrypto && toToken !== 'EUR')) {
+//             return res.status(404).json({msg: 'Cryptocurrency not found'});
+//         }
+//
+//         const fromPrice = fromCrypto.price;
+//         const toPrice = toCrypto.price;
+//
+//         const exchangeRate = fromPrice / toPrice;
+//         const exchangedAmount = amount * exchangeRate;
+//
+//         res.json({
+//             fromToken: {symbol: fromCrypto.symbol, price: fromPrice},
+//             toToken: {symbol: toCrypto.symbol, price: toPrice},
+//             exchangeRate,
+//             exchangedAmount
+//         });
+//     } catch (err) {
+//         console.error(err.message);
+//         res.status(500).send('Server Error');
+//     }
+// });
 //
 // router.post('/confirm-exchange', auth, async (req, res) => {
 //     const {fromToken, toToken, amount, exchangedAmount} = req.body;

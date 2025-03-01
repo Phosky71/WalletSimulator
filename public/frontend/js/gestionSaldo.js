@@ -402,9 +402,9 @@ async function verifyToken() {
 
 
 async function confirmExchange(fromTokenUid, toTokenUid, amount) {
-    const token = await getToken()
+    const token = await getToken();
     console.log(fromTokenUid, toTokenUid, amount);
-    const response = await fetch(`/api/crypto/exchange`, {
+    const response = await fetch('/api/transactions/confirm', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -421,6 +421,7 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
         console.error('Error during exchange request');
     }
 }
+
 
 async function finalizeExchange() {
     console.log('Finalizing exchange...');
@@ -901,7 +902,7 @@ document.getElementById('confirmSendToken').addEventListener('click', async func
 
     if (symbol && amount && receiverAddress) {
         try {
-            const response = await fetch('/api/crypto/send', {
+            const response = await fetch('/api/transactions/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1009,6 +1010,7 @@ async function displayPortfolioValueChart() {
 
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
+    console.log(data)
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
