@@ -33,9 +33,9 @@ router.post('/register', generatePublicAddress, async (req, res) => {
         if (emailExists) return res.status(400).json({msg: 'Email already registered'});
 
         user = new User({username, email, password, publicAddress});
-        await user.save();
-
-        res.location(`/api/users/${user._id}`).sendStatus(201);
+        const savedUser = await user.save();
+        res.location(`/api/users/${user._id}`).status(201).json(savedUser);
+        
     } catch (err) {
         console.error(err.message);
         if (res.statusCode === 400 && err.message.includes('User')) {
