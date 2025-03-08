@@ -822,7 +822,6 @@ async function fetchUserTransactions(address = '') {
 }
 
 async function displayUserTransactions(address = '') {
-
     const transactions = await fetchUserTransactions(address);
     const container = document.getElementById('transactionsContainer');
     container.innerHTML = ''; // Clear the container
@@ -830,40 +829,44 @@ async function displayUserTransactions(address = '') {
     for (const transaction of transactions) {
         const transactionElement = document.createElement('tr');
 
-        const date = new Date(transaction.date).toLocaleDateString('es-ES', {
+        const date = transaction.date ? new Date(transaction.date).toLocaleDateString('es-ES', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
-        });
+        }) : '';
 
-        const userFrom = transaction.userFrom.username;
-        const userTo = transaction.userTo.username;
+        const userFrom = transaction.userFrom?.username || '';
+        const userTo = transaction.userTo?.username || '';
+        const userFromAddress = transaction.userFrom?.publicAddress || '';
+        const userToAddress = transaction.userTo?.publicAddress || '';
 
         transactionElement.innerHTML = `
-            <td>${transaction.hash}</td>
-            <td class="user-tooltip" data-address="${transaction.userFrom.publicAddress}">${userFrom}</td>
-            <td class="user-tooltip" data-address="${transaction.userTo.publicAddress}">${userTo}</td>
-            <td>${transaction.symbol}</td>
-            <td>${transaction.toToken}</td>
-            <td>${transaction.fromAmount}</td>
-            <td>${transaction.toAmount}</td>
+            <td>${transaction.hash || ''}</td>
+            <td class="user-tooltip" data-address="${userFromAddress}">${userFrom}</td>
+            <td class="user-tooltip" data-address="${userToAddress}">${userTo}</td>
+            <td>${transaction.symbol || ''}</td>
+            <td>${transaction.toToken || ''}</td>
+            <td>${transaction.fromAmount || ''}</td>
+            <td>${transaction.toAmount || ''}</td>
             <td>${date}</td>
         `;
 
         container.appendChild(transactionElement);
     }
 
-    // Add event listeners for tooltips and copy functionality
     document.querySelectorAll('.user-tooltip').forEach(element => {
         element.setAttribute('title', 'Pulsa para copiar publicAddress');
         element.addEventListener('click', function () {
             const address = this.getAttribute('data-address');
-            navigator.clipboard.writeText(address).then(() => {
-                alert('Public address copied to clipboard');
-            });
+            if (address) {
+                navigator.clipboard.writeText(address).then(() => {
+                    alert('Public address copied to clipboard');
+                });
+            }
         });
     });
 }
+
 
 const cryptoDataCache = {};
 
