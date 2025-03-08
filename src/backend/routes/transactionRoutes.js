@@ -142,116 +142,102 @@ router.get('/user-transactions', auth, async (req, res) => {
     const {address, symbol, type, startDate, endDate} = req.query;
     const filter = {};
 
-    if (address) {
-        filter.$or = [{userFrom: address}, {userTo: address}];
-    }
-    if (symbol) {
-        filter.symbol = symbol;
-    }
-    if (type) {
-        filter.type = type;
-    }
-    if (startDate || endDate) {
-        filter.date = {};
-        if (startDate) {
-            filter.date.$gte = new Date(startDate);
-        }
-        if (endDate) {
-            filter.date.$lte = new Date(endDate);
-        }
-    }
-
-    console.log("filter");
     try {
-        const transactions = await Transaction.find(filter).sort({date: -1}).populate('userFrom', 'username publicAddress').populate('userTo', 'username publicAddress');
+        if (address) {
+            const user = await User.findOne({publicAddress: address});
+            if (user) {
+                filter.$or = [{userFrom: user._id}, {userTo: user._id}];
+            } else {
+                return res.status(404).json({msg: 'User not found'});
+            }
+        }
+        if (symbol) {
+            filter.symbol = symbol;
+        }
+        if (type) {
+            filter.type = type;
+        }
+        if (startDate || endDate) {
+            filter.date = {};
+            if (startDate) {
+                filter.date.$gte = new Date(startDate);
+            }
+            if (endDate) {
+                filter.date.$lte = new Date(endDate);
+            }
+        }
+
+        const transactions = await Transaction.find(filter)
+            .sort({date: -1})
+            .populate('userFrom', 'username publicAddress')
+            .populate('userTo', 'username publicAddress');
         res.json(transactions);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-
-router.post('/send', auth, [
-    check('symbol', 'Symbol is required').not().isEmpty(),
-    check('amount', 'Amount is required').isNumeric(),
-    check('receiverAddress', 'Receiver address is required').not().isEmpty()
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({errors: errors.array()});
-    }
-
-    const {symbol, amount, receiverAddress} = req.body;
+router.post('/send', auth, async (req, res) => {
+    const {uid, name, symbol, amount, receiverAddress} = req.body;
 
     try {
-        const session = await Crypto.startSession();
-        session.startTransaction();
-
-        const senderCrypto = await Crypto.findOne({user: req.user.id, symbol}).session(session);
+        // Verificar que el usuario tenga suficiente saldo
+        const senderCrypto = await Crypto.findOne({user: req.user.id, uid});
         if (!senderCrypto || senderCrypto.amount < amount) {
-            await session.abortTransaction();
-            await session.endSession();
-            return res.status(400).json({msg: 'Insufficient funds or cryptocurrency not found'});
+            return res.status(400).json({msg: 'Insufficient balance'});
         }
 
-        const receiverUser = await User.findOne({publicAddress: receiverAddress}).session(session);
-        if (!receiverUser) {
-            await session.abortTransaction();
-            await session.endSession();
+        // Restar la cantidad del saldo del remitente
+        senderCrypto.amount -= amount;
+        await senderCrypto.save();
+
+        // Buscar el usuario receptor por su dirección pública
+        const receiver = await User.findOne({publicAddress: receiverAddress});
+        if (!receiver) {
             return res.status(404).json({msg: 'Receiver not found'});
         }
 
-        let receiverCrypto = await Crypto.findOne({user: receiverUser.id, symbol}).session(session);
-        if (!receiverCrypto) {
+        // Buscar si el receptor ya tiene el token en su portafolio
+        let receiverCrypto = await Crypto.findOne({user: receiver._id, uid});
+        if (receiverCrypto) {
+            // Si el receptor ya tiene el token, sumar la cantidad
+            receiverCrypto.amount += amount;
+        } else {
+            // Si el receptor no tiene el token, crear un nuevo registro
             receiverCrypto = new Crypto({
-                user: receiverUser.id,
+                user: receiver._id,
+                uid,
+                name,
                 symbol,
-                amount: 0
+                amount
             });
         }
+        await receiverCrypto.save();
 
-        senderCrypto.amount -= amount;
-        receiverCrypto.amount += amount;
-
-        await senderCrypto.save({session});
-        await receiverCrypto.save({session});
-
-        if (receiverUser.settings.autoAddCrypto && !receiverCrypto) {
-            const newCrypto = new Crypto({
-                user: receiverUser.id,
-                symbol,
-                amount: amount
-            });
-            await newCrypto.save({session});
-        }
-
+        // Generar un hash único para la transacción
         let hash;
         let hashExists = true;
         while (hashExists) {
             hash = crypto.createHash('sha256').update(Date.now().toString() + req.user.id).digest('hex');
-            hashExists = await Transaction.findOne({hash}).session(session);
+            hashExists = await Transaction.findOne({hash});
         }
 
+        // Registrar la transacción
         const transaction = new Transaction({
-            hash,
+            hash: hash,
             userFrom: req.user.id,
-            userTo: receiverUser.id,
-            symbol,
-            toToken: 'SEND',
-            fromAmount: amount,
-            toAmount: amount,
+            userTo: receiver._id,
+            symbol: symbol,
+            toToken: symbol,
+            amount: amount,
             type: 'send'
         });
+        await transaction.save();
 
-        await transaction.save({session});
-
-        await session.commitTransaction();
-        await session.endSession();
-
-        res.json({msg: 'Transaction successful', transaction});
+        res.json({msg: 'Transaction successful'});
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({msg: 'Server Error'});
+        console.error('Failed to send token', err);
+        res.status(500).json({msg: 'Server error'});
     }
 });
 module.exports = router;
