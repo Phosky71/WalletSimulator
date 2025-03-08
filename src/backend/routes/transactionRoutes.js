@@ -6,6 +6,7 @@ const User = require('../models/Users');
 const Transaction = require('../models/Transaction');
 const router = express.Router();
 const crypto = require('crypto'); // Para generar un hash único
+const axios = require('axios');
 
 //Cambiar criptomonedas
 router.post('/exchange', auth, async (req, res) => {
