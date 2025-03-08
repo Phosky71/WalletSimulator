@@ -171,7 +171,6 @@ router.get('/user-transactions', auth, async (req, res) => {
     }
 });
 
-// Enviar tokens entre usuarios
 router.post('/send', auth, [
     check('symbol', 'Symbol is required').not().isEmpty(),
     check('amount', 'Amount is required').isNumeric(),
@@ -218,7 +217,6 @@ router.post('/send', auth, [
         await receiverCrypto.save({session});
 
         if (receiverUser.settings.autoAddCrypto && !receiverCrypto) {
-            // Si la criptomoneda no existe en el portfolio del receptor, agregarla
             const newCrypto = new Crypto({
                 user: receiverUser.id,
                 symbol,
@@ -227,7 +225,6 @@ router.post('/send', auth, [
             await newCrypto.save({session});
         }
 
-        // Generar un hash único
         let hash;
         let hashExists = true;
         while (hashExists) {
@@ -254,8 +251,7 @@ router.post('/send', auth, [
         res.json({msg: 'Transaction successful', transaction});
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server Error');
+        res.status(500).json({msg: 'Server Error'});
     }
 });
-
 module.exports = router;

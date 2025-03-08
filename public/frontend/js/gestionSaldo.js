@@ -617,6 +617,7 @@ async function startCountdown(duration, fromToken, toToken, amount) {
     }, 1000);
 }
 
+
 async function updateExchangeRates(fromToken, toToken, amount) {
     const token = await getToken();
     try {
@@ -662,6 +663,7 @@ async function updateExchangeRates(fromToken, toToken, amount) {
         console.error('Error updating exchange rates:', error);
     }
 }
+
 
 
 // document.getElementById('showConfirmExchangeModalButton').addEventListener('click', () => {
