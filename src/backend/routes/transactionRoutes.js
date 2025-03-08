@@ -151,6 +151,7 @@ router.get('/user-transactions', auth, async (req, res) => {
                 return res.status(404).json({msg: 'User not found'});
             }
         }
+        console.log(address);
         if (symbol) {
             filter.symbol = symbol;
         }
@@ -167,10 +168,12 @@ router.get('/user-transactions', auth, async (req, res) => {
             }
         }
 
+
         const transactions = await Transaction.find(filter)
             .sort({date: -1})
             .populate('userFrom', 'username publicAddress')
             .populate('userTo', 'username publicAddress');
+        console.log(transactions);
         res.json(transactions);
     } catch (err) {
         console.error(err.message);
