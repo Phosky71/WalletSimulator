@@ -468,7 +468,7 @@ async function finalizeExchange() {
             console.log(exchangedAmount);
 
             const token = await getToken()
-            const response = await fetch(`/api/transactions/confirm-exchange`, {
+            const response = await fetch(`/api/transactions/confirm`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
