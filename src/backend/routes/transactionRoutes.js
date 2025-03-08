@@ -207,10 +207,19 @@ router.post('/send', auth, async (req, res) => {
             return res.status(400).json({msg: 'Insufficient balance'});
         }
 
-        // Restar la cantidad del saldo del remitente
-        senderCrypto.amount -= amount;
-        await senderCrypto.save();
-        console.log('Saldo del remitente actualizado:', senderCrypto.amount);
+        // Intentar actualizar el saldo del remitente
+        const updatedSenderCrypto = await Crypto.findOneAndUpdate(
+            {user: req.user.id, uid, amount: senderCrypto.amount},
+            {$inc: {amount: -amount}},
+            {new: true}
+        );
+
+        if (!updatedSenderCrypto) {
+            // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
+            // Volver a intentarlo
+            return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
+        }
+        console.log('Saldo del remitente actualizado:', updatedSenderCrypto.amount);
 
         // Buscar el usuario receptor por su dirección pública
         const receiver = await User.findOne({publicAddress: receiverAddress});
@@ -226,8 +235,19 @@ router.post('/send', auth, async (req, res) => {
         console.log('Token del receptor:', receiverCrypto); // Verificar si el receptor ya tiene el token
 
         if (receiverCrypto) {
-            // Si el receptor ya tiene el token, sumar la cantidad
-            receiverCrypto.amount += amount;
+            // Intentar actualizar el saldo del receptor
+            const updatedReceiverCrypto = await Crypto.findOneAndUpdate(
+                {user: receiver._id, uid, amount: receiverCrypto.amount},
+                {$inc: {amount: amount}},
+                {new: true}
+            );
+
+            if (!updatedReceiverCrypto) {
+                // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
+                // Volver a intentarlo
+                return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
+            }
+            receiverCrypto = updatedReceiverCrypto;
         } else {
             // Si el receptor no tiene el token, crear un nuevo registro
             receiverCrypto = new Crypto({
@@ -235,10 +255,10 @@ router.post('/send', auth, async (req, res) => {
                 uid,
                 name,
                 symbol,
-                amount
+                amount: parseFloat(amount)
             });
+            await receiverCrypto.save();
         }
-        await receiverCrypto.save();
         console.log('Saldo del receptor actualizado:', receiverCrypto.amount);
 
         // Generar un hash único para la transacción

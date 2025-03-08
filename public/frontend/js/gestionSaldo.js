@@ -989,6 +989,7 @@ $('#sendModal').on('show.bs.modal', function () {
 });
 
 document.getElementById('confirmSendToken').addEventListener('click', async function () {
+    const token =await getToken();
     const symbol = document.getElementById('sendCryptoSelect').value;
     const amount = document.getElementById('sendAmount').value;
     const receiverAddress = document.getElementById('receiverAddress').value;
@@ -1004,7 +1005,7 @@ document.getElementById('confirmSendToken').addEventListener('click', async func
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({uid, name, symbol, amount, receiverAddress})
             });
