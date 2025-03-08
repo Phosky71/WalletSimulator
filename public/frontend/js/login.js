@@ -110,7 +110,7 @@ async function register() {
             });
             console.log(response);
             //TODO: No hay respuesta
-            if (response.ok) {
+            if (response.ok || response.status === 201) {
                 const data = await response.json();
                 localStorage.setItem('publicAddress', data.publicAddress);
 
