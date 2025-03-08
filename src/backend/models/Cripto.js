@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const CryptoSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'user',
+        ref: 'User',
     },
     name: {
         type: String,
