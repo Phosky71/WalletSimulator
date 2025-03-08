@@ -801,6 +801,7 @@ async function getToken() {
         window.location.href = '/frontend/html/login.html';
     }
 }
+
 async function fetchUserTransactions(address) {
     const token = await getToken();
     const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
@@ -890,8 +891,21 @@ async function fetchCryptoData(uid) {
 }
 
 document.getElementById('transactionsButton').addEventListener('click', async function () {
-    const user = await fetchUserDetails();
-    await displayUserTransactions(user.publicAddress);
+    const token = await getToken();
+    const response = await fetch('/api/users/me', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch user details');
+    }
+
+    const userDetails = await response.json();
+    const publicAddress = userDetails.publicAddress;
+    await displayUserTransactions(publicAddress);
     $('#transactionsModal').modal('show');
 });
 
