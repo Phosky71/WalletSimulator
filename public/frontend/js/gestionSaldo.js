@@ -137,7 +137,7 @@ async function displayCryptocurrencies(cryptocurrencies) {
 async function addCryptocurrencyAutomatically(cryptocurrency) {
     const token = await getToken();
     try {
-        const response = await fetch('/api/getSettings', {
+        const response = await fetch('/api/settings/getSettings', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -436,6 +436,7 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
 
     if (response.ok) {
         const exchangeInfo = await response.json();
+        console.log(exchangeInfo);
         displayExchangeModal();
         return exchangeInfo; // Devuelve exchangeInfo
     } else {
@@ -1097,17 +1098,17 @@ async function fetchPortfolioValues() {
     }
 }
 
-document.getElementById('addCryptoAutomatically').addEventListener('change', async function() {
+document.getElementById('autoAddCrypto').addEventListener('change', async function () {
     const preference = this.checked;
     const token = await getToken();
     try {
-        const response = await fetch('/api/saveSettings', {
+        const response = await fetch('/api/settings/saveSettings', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ settings: { addCryptoAutomatically: preference } })
+            body: JSON.stringify({settings: {addCryptoAutomatically: preference}})
         });
         if (response.ok) {
             console.log('Settings saved successfully');
@@ -1122,7 +1123,7 @@ document.getElementById('addCryptoAutomatically').addEventListener('change', asy
 async function loadSettings() {
     const token = await getToken();
     try {
-        const response = await fetch('/api/getSettings', {
+        const response = await fetch('/api/settings/getSettings', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1131,7 +1132,7 @@ async function loadSettings() {
         });
         if (response.ok) {
             const settings = await response.json();
-            document.getElementById('addCryptoAutomatically').checked = settings.addCryptoAutomatically;
+            document.getElementById('autoAddCrypto').checked = settings.addCryptoAutomatically;
         } else {
             console.error('Failed to load settings');
         }
@@ -1141,5 +1142,9 @@ async function loadSettings() {
 }
 
 // Llamar a loadSettings cuando se abran los ajustes
-document.getElementById('settingsButton').addEventListener('click', loadSettings);
+document.getElementById('settingsButton').addEventListener('click', async function () {
+    await loadSettings();
+    $('#settingsModal').modal('show');
+});
+
 

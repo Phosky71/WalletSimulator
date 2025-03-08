@@ -216,9 +216,14 @@ router.post('/send', auth, [
         await senderCrypto.save({session});
         await receiverCrypto.save({session});
 
-        // Verificar si el receptor tiene habilitada la opción autoAddCrypto
-        if (receiverUser.settings.autoAddCrypto) {
-            await receiverCrypto.save({session});
+        if (receiverUser.settings.autoAddCrypto && !receiverCrypto) {
+            // Si la criptomoneda no existe en el portfolio del receptor, agregarla
+            const newCrypto = new Crypto({
+                user: receiverUser.id,
+                symbol,
+                amount: amount
+            });
+            await newCrypto.save({session});
         }
 
         // Generar un hash único
