@@ -528,21 +528,47 @@ async function displayExchangeModal() {
         let countdown = 30;
         const countdownElement = document.getElementById('countdown');
         const circleElement = document.querySelector('.progress-ring__circle');
-        const circumference = 2 * Math.PI * circleElement.getAttribute('r');
+        const radius = circleElement.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+
         circleElement.style.strokeDasharray = `${circumference} ${circumference}`;
         circleElement.style.strokeDashoffset = `${circumference}`;
 
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-            const offset = circumference - (countdown / 30) * circumference;
-            circleElement.style.strokeDashoffset = offset;
+        const fromTokenSelect = document.getElementById('fromTokenSelect');
+        const toTokenSelect = document.getElementById('toTokenSelect');
 
-            if (countdown <= 0) {
-                countdown = 30;
-                circleElement.style.strokeDashoffset = `${circumference}`; // Reset animation
-            }
-        }, 1000);
+        let fromTokenUid = fromTokenSelect.options[fromTokenSelect.selectedIndex].getAttribute('data-uid');
+        let toTokenUid = toTokenSelect.options[toTokenSelect.selectedIndex].getAttribute('data-uid');
+
+        // Obtener los nombres de los tokens
+        let fromTokenName = fromTokenSelect.options[fromTokenSelect.selectedIndex].textContent;
+        let toTokenName = toTokenSelect.options[toTokenSelect.selectedIndex].textContent;
+
+        // Si el token es EUR, mostrar EUR; de lo contrario, mostrar el nombre del token
+        const confirmFromTokenElement = document.getElementById('confirmFromToken');
+        const confirmToTokenElement = document.getElementById('confirmToToken');
+
+        if (fromTokenUid === 'EUR') {
+            confirmFromTokenElement.textContent = 'EUR';
+        } else {
+            confirmFromTokenElement.textContent = fromTokenName;
+        }
+
+        if (toTokenUid === 'EUR') {
+            confirmToTokenElement.textContent = 'EUR';
+        } else {
+            confirmToTokenElement.textContent = toTokenName;
+        }
+
+        // Mostrar el símbolo del token después del exchange rate
+        const exchangeRateElement = document.getElementById('confirmExchangeRate');
+        const exchangedAmountElement = document.getElementById('confirmExchangedAmount');
+
+        // Asegúrate de que exchangeInfo esté definido
+        const exchangeInfo = await confirmExchange(fromTokenUid, toTokenUid, parseFloat(document.getElementById('exchangeAmount').value));
+
+        exchangeRateElement.textContent = `${exchangeInfo.exchangeRate.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
+        exchangedAmountElement.textContent = `${exchangeInfo.exchangedAmount.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
 
         document.getElementById('confirmExchangeContainer').style.display = 'block';
         document.getElementById('exchangeForm').style.display = 'none';
@@ -552,6 +578,7 @@ async function displayExchangeModal() {
         });
     });
 }
+
 
 document.querySelector('#confirmExchangeModal .close').addEventListener('click', function () {
     $('#confirmExchangeModal').modal('hide');
@@ -564,7 +591,7 @@ document.getElementById('cancelConfirmExchange').addEventListener('click', funct
 let countdownInterval;
 let exchangeInterval;
 
-function startCountdown(duration, fromToken, toToken, amount) {
+async function startCountdown(duration, fromToken, toToken, amount) {
     let countdown = duration;
     const countdownElement = document.getElementById('countdown');
     const circleElement = document.querySelector('.progress-ring__circle');
@@ -575,7 +602,6 @@ function startCountdown(duration, fromToken, toToken, amount) {
     circleElement.style.strokeDashoffset = `${circumference}`;
 
     clearInterval(countdownInterval);
-
     countdownInterval = setInterval(async () => {
         countdownElement.textContent = countdown;
         const offset = circumference - (countdown / duration) * circumference;
@@ -583,8 +609,8 @@ function startCountdown(duration, fromToken, toToken, amount) {
 
         if (countdown <= 0) {
             clearInterval(countdownInterval);
-            await updateExchangeRates(fromToken, toToken, amount); // Actualizar tasas de cambio
-            startCountdown(duration, fromToken, toToken, amount); // Reiniciar el temporizador
+            await updateExchangeRates(fromToken, toToken, amount);
+            startCountdown(duration, fromToken, toToken, amount);
         } else {
             countdown--;
         }
@@ -592,10 +618,6 @@ function startCountdown(duration, fromToken, toToken, amount) {
 }
 
 async function updateExchangeRates(fromToken, toToken, amount) {
-    // const fromToken = document.getElementById('fromTokenSelect').value;
-    // const toToken = document.getElementById('toTokenSelect').value;
-    // const amount = document.getElementById('exchangeAmount').value;
-
     const token = await getToken();
     try {
         const response = await fetch('/api/transactions/exchange', {
@@ -604,15 +626,35 @@ async function updateExchangeRates(fromToken, toToken, amount) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({fromToken, toToken, amount})
+            body: JSON.stringify({ fromToken, toToken, amount })
         });
 
         if (response.ok) {
             const data = await response.json();
-            document.getElementById('confirmFromToken').textContent = data.fromToken.symbol;
-            document.getElementById('confirmToToken').textContent = data.toToken.symbol;
-            document.getElementById('confirmExchangeRate').textContent = data.exchangeRate.toFixed(8);
-            document.getElementById('confirmExchangedAmount').textContent = data.exchangedAmount.toFixed(8);
+
+            const fromTokenSelect = document.getElementById('fromTokenSelect');
+            const toTokenSelect = document.getElementById('toTokenSelect');
+
+            let fromTokenName = fromTokenSelect.options[fromTokenSelect.selectedIndex].textContent;
+            let toTokenName = toTokenSelect.options[toTokenSelect.selectedIndex].textContent;
+
+            const confirmFromTokenElement = document.getElementById('confirmFromToken');
+            const confirmToTokenElement = document.getElementById('confirmToToken');
+
+            if (fromToken === 'EUR') {
+                confirmFromTokenElement.textContent = 'EUR';
+            } else {
+                confirmFromTokenElement.textContent = fromTokenName;
+            }
+
+            if (toToken === 'EUR') {
+                confirmToTokenElement.textContent = 'EUR';
+            } else {
+                confirmToTokenElement.textContent = toTokenName;
+            }
+
+            document.getElementById('confirmExchangeRate').textContent = `${data.exchangeRate.toFixed(8)} ${toToken === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
+            document.getElementById('confirmExchangedAmount').textContent = `${data.exchangedAmount.toFixed(8)} ${toToken === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
         } else {
             console.error('Failed to update exchange rates');
         }
@@ -620,6 +662,7 @@ async function updateExchangeRates(fromToken, toToken, amount) {
         console.error('Error updating exchange rates:', error);
     }
 }
+
 
 // document.getElementById('showConfirmExchangeModalButton').addEventListener('click', () => {
 //     startCountdown(30); // Iniciar el temporizador de 30 segundos
