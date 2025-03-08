@@ -80,7 +80,7 @@ document.getElementById('showConfirmExchangeModalButton').addEventListener('clic
             keyboard: false
         }).modal('show');
 
-        startCountdown(30, fromTokenUid, toTokenUid, amount);
+        startCountdown(30, fromTokenUid, toTokenUid, amount, exchangeInfo.exchangedAmount);
     } catch (error) {
         console.error('Error confirming exchange:', error);
         alert('There was an error confirming the exchange. Please try again. ' + error.message);
