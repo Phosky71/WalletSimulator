@@ -462,6 +462,9 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
         body: JSON.stringify({fromToken: fromTokenUid, toToken: toTokenUid, amount})
     });
 
+    console.log('Response:');
+    console.log(response);
+
     if (response.ok) {
         const exchangeInfo = await response.json();
         console.log('Exchange confirmed');
