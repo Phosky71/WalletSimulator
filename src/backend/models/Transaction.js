@@ -8,12 +8,12 @@ const TransactionSchema = new mongoose.Schema({
     },
     userFrom: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
+        ref: 'user',
         required: true
     },
     userTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
+        ref: 'user',
         required: function () {
             return this.type === 'send';
         }
