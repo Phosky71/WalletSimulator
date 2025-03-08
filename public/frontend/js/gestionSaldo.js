@@ -1100,20 +1100,24 @@ function aggregatePortfolioValues(portfolioValues) {
     }));
 }
 
-async function displayPortfolioValueChart() {
-    const portfolioValues = await fetchPortfolioValues();
-    const aggregatedValues = aggregatePortfolioValues(portfolioValues);
 
-    console.log("Aggregated Values:", aggregatedValues); // Verifica los datos
+async function displayPortfolioValueChart() {
+    const portfolioValues = await fetchPortfolioValues(); // Obtener los valores del portafolio
+    const aggregatedValues = aggregatePortfolioValues(portfolioValues); // Agregar valores por fecha
+
+    if (!aggregatedValues || aggregatedValues.length === 0) {
+        console.error("No data available for the chart");
+        return; // Salir si no hay datos para graficar
+    }
 
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
 
-    console.log("Labels:", labels); // Verifica las etiquetas
-    console.log("Data:", data); // Verifica los valores
+    console.log("Labels:", labels); // Verificar las etiquetas (fechas)
+    console.log("Data:", data); // Verificar los valores (balances)
 
     const maxValue = Math.max(...data);
-    const maxChartValue = maxValue + 5; // Ajusta el máximo del gráfico
+    const maxChartValue = maxValue + 5; // Ajustar el máximo del gráfico
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
@@ -1150,7 +1154,7 @@ async function displayPortfolioValueChart() {
                     },
                     beginAtZero: true,
                     min: 0,
-                    max: maxChartValue // Ajusta el máximo del eje Y
+                    max: maxChartValue // Establecer el máximo dinámico en función de los datos
                 }
             }
         }
@@ -1159,8 +1163,8 @@ async function displayPortfolioValueChart() {
 
 
 async function fetchPortfolioValues() {
-    const token = await getToken();
-    const response = await fetch('/api/portfolio-values', {
+    const token = await getToken(); // Obtener el token del usuario
+    const response = await fetch('/api/users/balanceHistory', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -1168,14 +1172,14 @@ async function fetchPortfolioValues() {
         }
     });
 
-    if (response.ok) {
-        const data = await response.json();
-        console.log("Portfolio Values:", data); // Verifica los datos obtenidos
-        return data;
-    } else {
-        console.error("Failed to fetch portfolio values");
+    if (!response.ok) {
+        console.error('Failed to fetch portfolio values');
         return [];
     }
+
+    const balanceHistory = await response.json();
+    console.log("Balance History:", balanceHistory); // Verifica los datos obtenidos
+    return balanceHistory;
 }
 
 
