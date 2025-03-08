@@ -215,6 +215,9 @@ async function addCryptocurrencyToPortfolio() {
             body: JSON.stringify({uid: selectedCryptocurrencyUid})
         });
 
+        console.log("Primero");
+        console.log(response);
+
         if (response.ok) {
             const selectedCryptocurrency = await response.json();
             console.log(selectedCryptocurrency);
@@ -232,6 +235,7 @@ async function addCryptocurrencyToPortfolio() {
                     amount: 0 // Establecer la cantidad inicial en 0
                 })
             });
+            console.log("Segundo");
             console.log(addResponse);
 
             if (addResponse.ok) {
