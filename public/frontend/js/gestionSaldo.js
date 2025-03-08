@@ -70,8 +70,6 @@ document.getElementById('showConfirmExchangeModalButton').addEventListener('clic
 
         const exchangeInfo = await confirmExchange(fromTokenUid, toTokenUid, amount);
 
-        console.log('Exchange info:', exchangeInfo);
-
         document.getElementById('confirmFromToken').textContent = fromTokenSelect.options[fromTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmToToken').textContent = toTokenSelect.options[toTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmExchangeRate').textContent = `${exchangeInfo.exchangeRate.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
@@ -239,12 +237,9 @@ async function addCryptocurrencyToPortfolio() {
             body: JSON.stringify({uid: selectedCryptocurrencyUid})
         });
 
-        console.log("Primero");
-        console.log(response);
 
         if (response.ok) {
             const selectedCryptocurrency = await response.json();
-            console.log(selectedCryptocurrency);
 
             const addResponse = await fetch('/api/crypto', {
                 method: 'POST',
@@ -259,8 +254,6 @@ async function addCryptocurrencyToPortfolio() {
                     amount: 0 // Establecer la cantidad inicial en 0
                 })
             });
-            console.log("Segundo");
-            console.log(addResponse);
 
             if (addResponse.ok) {
                 // Actualizar las criptomonedas del usuario
@@ -428,7 +421,6 @@ function updateFromTokenOptions(selectedToToken, fromSelectElement) {
 
 async function verifyToken() {
     const token = await getToken()
-    console.log('Verifying token:', token);
     const response = await fetch('/api/auth/verifyToken', {
         method: 'GET',
         headers: {
@@ -452,7 +444,6 @@ async function verifyToken() {
 
 async function confirmExchange(fromTokenUid, toTokenUid, amount) {
     const token = await getToken();
-    console.log(fromTokenUid, toTokenUid, amount);
     const response = await fetch('/api/transactions/confirm', {
         method: 'POST',
         headers: {
@@ -462,13 +453,8 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
         body: JSON.stringify({fromToken: fromTokenUid, toToken: toTokenUid, amount})
     });
 
-    console.log('Response:');
-    console.log(response);
-
     if (response.ok) {
         const exchangeInfo = await response.json();
-        console.log('Exchange confirmed');
-        console.log(exchangeInfo);
         displayExchangeModal();
         return exchangeInfo; // Devuelve exchangeInfo
     } else {
@@ -478,9 +464,7 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
 
 
 async function finalizeExchange() {
-    console.log('Finalizing exchange...');
     const finalize = async function () {
-        console.log('DOM fully loaded and parsed');
         let fromTokenUid = document.getElementById('fromTokenSelect').options[document.getElementById('fromTokenSelect').selectedIndex].getAttribute('data-uid');
         let toTokenUid = document.getElementById('toTokenSelect').options[document.getElementById('toTokenSelect').selectedIndex].getAttribute('data-uid');
         const exchangedAmountElement = document.getElementById('confirmExchangedAmount');
@@ -492,12 +476,9 @@ async function finalizeExchange() {
             toTokenUid = "EUR";
         }
 
-        console.log(fromTokenUid, toTokenUid);
-        console.log(exchangedAmountElement);
 
         if (exchangedAmountElement) {
             const exchangedAmount = parseFloat(exchangedAmountElement.textContent);
-            console.log(exchangedAmount);
 
             const token = await getToken()
             const response = await fetch(`/api/transactions/confirm`, {
@@ -515,7 +496,6 @@ async function finalizeExchange() {
             });
 
             if (response.ok) {
-                console.log('Exchange confirmed');
                 // Cerrar los modales
                 $('#exchangeModal').modal('hide');
                 $('#confirmExchangeModal').modal('hide');
@@ -617,7 +597,7 @@ async function updateExchangeRates(fromToken, toToken, amount) {
 
     const token = await getToken();
     try {
-        const response = await fetch('/api/crypto/exchange', {
+        const response = await fetch('/api/transactions/exchange', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -628,9 +608,6 @@ async function updateExchangeRates(fromToken, toToken, amount) {
 
         if (response.ok) {
             const data = await response.json();
-            console.log(data);
-            console.log(data.fromToken);
-            console.log(data.toToken);
             document.getElementById('confirmFromToken').textContent = data.fromToken.symbol;
             document.getElementById('confirmToToken').textContent = data.toToken.symbol;
             document.getElementById('confirmExchangeRate').textContent = data.exchangeRate.toFixed(8);
@@ -762,7 +739,6 @@ async function fetchCryptoValue(uid) {
 }
 
 async function getToken() {
-    console.log('Fetching token')
     try {
         const response = await fetch('/api/auth/token', {
             method: 'GET',
@@ -774,7 +750,6 @@ async function getToken() {
         }
 
         const {token} = await response.json();
-        console.log('Token fetched:', token);
         return token;
     } catch (error) {
         console.error('Error fetching token:', error);
@@ -1056,15 +1031,11 @@ function aggregatePortfolioValues(portfolioValues) {
 }
 
 async function displayPortfolioValueChart() {
-    console.log('Displaying portfolio value chart');
     const portfolioValues = await fetchPortfolioValues();
-    console.log(portfolioValues);
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
-    console.log(aggregatedValues);
 
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
-    console.log(data)
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
