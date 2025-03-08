@@ -627,7 +627,7 @@ async function updateExchangeRates(fromToken, toToken, amount) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ fromToken, toToken, amount })
+            body: JSON.stringify({fromToken, toToken, amount})
         });
 
         if (response.ok) {
@@ -663,7 +663,6 @@ async function updateExchangeRates(fromToken, toToken, amount) {
         console.error('Error updating exchange rates:', error);
     }
 }
-
 
 
 // document.getElementById('showConfirmExchangeModalButton').addEventListener('click', () => {
@@ -890,7 +889,7 @@ async function fetchCryptoData(uid) {
 }
 
 document.getElementById('transactionsButton').addEventListener('click', async function () {
-    await displayUserTransactions();
+    await displayUserTransactions(localStorage.getItem('publicAddress'));
     $('#transactionsModal').modal('show');
 });
 
@@ -975,7 +974,12 @@ document.getElementById('confirmSendToken').addEventListener('click', async func
     const amount = document.getElementById('sendAmount').value;
     const receiverAddress = document.getElementById('receiverAddress').value;
 
-    if (symbol && amount && receiverAddress) {
+    // Obtener el uid y el nombre de la criptomoneda seleccionada
+    const selectedCrypto = userCryptocurrencies.find(crypto => crypto.symbol === symbol);
+    const uid = selectedCrypto ? selectedCrypto.uid : null;
+    const name = selectedCrypto ? selectedCrypto.name : null;
+
+    if (uid && name && symbol && amount && receiverAddress) {
         try {
             const response = await fetch('/api/transactions/send', {
                 method: 'POST',
@@ -983,7 +987,7 @@ document.getElementById('confirmSendToken').addEventListener('click', async func
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({symbol, amount, receiverAddress})
+                body: JSON.stringify({uid, name, symbol, amount, receiverAddress})
             });
 
             if (response.ok) {
