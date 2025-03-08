@@ -138,11 +138,14 @@ router.post('/confirm', auth, async (req, res) => {
 });
 
 // Obtener transacciones con filtros opcionales
+// Obtener transacciones con filtros opcionales
 router.get('/user-transactions', auth, async (req, res) => {
     const {address, symbol, type, startDate, endDate} = req.query;
-    const filter = {};
+
+    let filter = {};
 
     try {
+        // Si se proporciona una dirección, buscar transacciones relacionadas con esa dirección
         if (address) {
             const user = await User.findOne({publicAddress: address});
             if (user) {
@@ -151,12 +154,21 @@ router.get('/user-transactions', auth, async (req, res) => {
                 return res.status(404).json({msg: 'User not found'});
             }
         }
+
+        // Si no se proporciona dirección, mostrar todas las transacciones
+        if (!address) {
+            // No aplicar filtro por usuario
+        }
+
+        // Aplicar otros filtros si están presentes
         if (symbol) {
             filter.symbol = symbol;
         }
+
         if (type) {
             filter.type = type;
         }
+
         if (startDate || endDate) {
             filter.date = {};
             if (startDate) {
@@ -178,6 +190,8 @@ router.get('/user-transactions', auth, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;
 

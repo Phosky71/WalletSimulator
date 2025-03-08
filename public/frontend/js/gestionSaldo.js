@@ -802,7 +802,7 @@ async function getToken() {
     }
 }
 
-async function fetchUserTransactions(address) {
+async function fetchUserTransactions(address = '') {
     const token = await getToken();
     const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
         method: 'GET',
@@ -821,7 +821,7 @@ async function fetchUserTransactions(address) {
     }
 }
 
-async function displayUserTransactions(address) {
+async function displayUserTransactions(address = '') {
 
     const transactions = await fetchUserTransactions(address);
     const container = document.getElementById('transactionsContainer');
@@ -891,21 +891,21 @@ async function fetchCryptoData(uid) {
 }
 
 document.getElementById('transactionsButton').addEventListener('click', async function () {
-    const token = await getToken();
-    const response = await fetch('/api/users/me', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch user details');
-    }
-
-    const userDetails = await response.json();
-    const publicAddress = userDetails.publicAddress;
-    await displayUserTransactions(publicAddress);
+    // const token = await getToken();
+    // const response = await fetch('/api/users/me', {
+    //     method: 'GET',
+    //     headers: {
+    //         'Authorization': `Bearer ${token}`
+    //     }
+    // });
+    //
+    // if (!response.ok) {
+    //     throw new Error('Failed to fetch user details');
+    // }
+    //
+    // const userDetails = await response.json();
+    // const publicAddress = userDetails.publicAddress;
+    await displayUserTransactions();
     $('#transactionsModal').modal('show');
 });
 
