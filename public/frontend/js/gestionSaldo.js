@@ -801,128 +801,67 @@ async function getToken() {
         window.location.href = '/frontend/html/login.html';
     }
 }
-
 async function fetchUserTransactions(address) {
     const token = await getToken();
-    try {
-        const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (response.ok) {
-            const transactions = await response.json();
-            return transactions;
-        } else {
-            console.error('Failed to fetch user transactions');
-            return [];
+    const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
         }
-    } catch (error) {
-        console.error('Error fetching user transactions:', error);
+    });
+
+    console.log(response);
+    if (response.ok) {
+        return await response.json();
+    } else {
+        console.error('Failed to fetch user transactions');
         return [];
     }
 }
 
-async function displayUserTransactions(transactions) {
-    const transactionsContainer = document.getElementById('transactionsContainer');
-    transactionsContainer.innerHTML = '';
-    transactions.forEach(transaction => {
-        const rowElement = document.createElement('tr');
-        const hashCell = document.createElement('td');
-        hashCell.textContent = transaction.hash;
-        const fromUserCell = document.createElement('td');
-        fromUserCell.textContent = transaction.userFrom;
-        const toUserCell = document.createElement('td');
-        toUserCell.textContent = transaction.userTo;
-        const symbolCell = document.createElement('td');
-        symbolCell.textContent = transaction.symbol;
-        const toTokenCell = document.createElement('td');
-        toTokenCell.textContent = transaction.toToken;
-        const fromAmountCell = document.createElement('td');
-        fromAmountCell.textContent = transaction.fromAmount;
-        const toAmountCell = document.createElement('td');
-        toAmountCell.textContent = transaction.toAmount;
-        const dateCell = document.createElement('td');
-        dateCell.textContent = transaction.date;
+async function displayUserTransactions(address) {
+    const transactions = await fetchUserTransactions(address);
+    const container = document.getElementById('transactionsContainer');
+    container.innerHTML = ''; // Clear the container
 
-        rowElement.appendChild(hashCell);
-        rowElement.appendChild(fromUserCell);
-        rowElement.appendChild(toUserCell);
-        rowElement.appendChild(symbolCell);
-        rowElement.appendChild(toTokenCell);
-        rowElement.appendChild(fromAmountCell);
-        rowElement.appendChild(toAmountCell);
-        rowElement.appendChild(dateCell);
+    for (const transaction of transactions) {
+        const transactionElement = document.createElement('tr');
 
-        transactionsContainer.appendChild(rowElement);
+        const date = new Date(transaction.date).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        const userFrom = transaction.userFrom.username;
+        const userTo = transaction.userTo.username;
+
+        transactionElement.innerHTML = `
+            <td>${transaction.hash}</td>
+            <td class="user-tooltip" data-address="${transaction.userFrom.publicAddress}">${userFrom}</td>
+            <td class="user-tooltip" data-address="${transaction.userTo.publicAddress}">${userTo}</td>
+            <td>${transaction.symbol}</td>
+            <td>${transaction.toToken}</td>
+            <td>${transaction.fromAmount}</td>
+            <td>${transaction.toAmount}</td>
+            <td>${date}</td>
+        `;
+
+        container.appendChild(transactionElement);
+    }
+
+    // Add event listeners for tooltips and copy functionality
+    document.querySelectorAll('.user-tooltip').forEach(element => {
+        element.setAttribute('title', 'Pulsa para copiar publicAddress');
+        element.addEventListener('click', function () {
+            const address = this.getAttribute('data-address');
+            navigator.clipboard.writeText(address).then(() => {
+                alert('Public address copied to clipboard');
+            });
+        });
     });
 }
-
-
-
-// async function fetchUserTransactions(address) {
-//     const token = await getToken();
-//     const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
-//         method: 'GET',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'Authorization': `Bearer ${token}`
-//         }
-//     });
-//
-//     console.log(response);
-//     if (response.ok) {
-//         return await response.json();
-//     } else {
-//         console.error('Failed to fetch user transactions');
-//         return [];
-//     }
-// }
-//
-// async function displayUserTransactions(address) {
-//     const transactions = await fetchUserTransactions(address);
-//     const container = document.getElementById('transactionsContainer');
-//     container.innerHTML = ''; // Clear the container
-//
-//     for (const transaction of transactions) {
-//         const transactionElement = document.createElement('tr');
-//
-//         const date = new Date(transaction.date).toLocaleDateString('es-ES', {
-//             year: 'numeric',
-//             month: '2-digit',
-//             day: '2-digit'
-//         });
-//
-//         const userFrom = transaction.userFrom.username;
-//         const userTo = transaction.userTo.username;
-//
-//         transactionElement.innerHTML = `
-//             <td>${transaction.hash}</td>
-//             <td class="user-tooltip" data-address="${transaction.userFrom.publicAddress}">${userFrom}</td>
-//             <td class="user-tooltip" data-address="${transaction.userTo.publicAddress}">${userTo}</td>
-//             <td>${transaction.symbol}</td>
-//             <td>${transaction.toToken}</td>
-//             <td>${transaction.fromAmount}</td>
-//             <td>${transaction.toAmount}</td>
-//             <td>${date}</td>
-//         `;
-//
-//         container.appendChild(transactionElement);
-//     }
-//
-//     // Add event listeners for tooltips and copy functionality
-//     document.querySelectorAll('.user-tooltip').forEach(element => {
-//         element.setAttribute('title', 'Pulsa para copiar publicAddress');
-//         element.addEventListener('click', function () {
-//             const address = this.getAttribute('data-address');
-//             navigator.clipboard.writeText(address).then(() => {
-//                 alert('Public address copied to clipboard');
-//             });
-//         });
-//     });
-// }
 
 const cryptoDataCache = {};
 
