@@ -802,7 +802,7 @@ async function getToken() {
     }
 }
 
-async function fetchUserTransactions(address = '') {
+async function fetchUserTransactions(address) {
     const token = await getToken();
     const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
         method: 'GET',
@@ -812,6 +812,7 @@ async function fetchUserTransactions(address = '') {
         }
     });
 
+    console.log(response);
     if (response.ok) {
         return await response.json();
     } else {
@@ -820,7 +821,7 @@ async function fetchUserTransactions(address = '') {
     }
 }
 
-async function displayUserTransactions(address = '') {
+async function displayUserTransactions(address) {
     const transactions = await fetchUserTransactions(address);
     const container = document.getElementById('transactionsContainer');
     container.innerHTML = ''; // Clear the container
