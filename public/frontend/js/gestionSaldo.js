@@ -1093,9 +1093,10 @@ function aggregatePortfolioValues(portfolioValues) {
         }
     });
 
+    // Convertir el objeto de valores agregados en un array con promedio calculado
     return Object.keys(aggregatedValues).map(date => ({
         date: date,
-        value: (aggregatedValues[date].sum / aggregatedValues[date].count).toFixed(2)
+        balance: (aggregatedValues[date].sum / aggregatedValues[date].count).toFixed(2) // Calcular el promedio
     }));
 }
 
@@ -1103,11 +1104,16 @@ async function displayPortfolioValueChart() {
     const portfolioValues = await fetchPortfolioValues();
     const aggregatedValues = aggregatePortfolioValues(portfolioValues);
 
+    console.log("Aggregated Values:", aggregatedValues); // Verifica los datos
+
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
 
+    console.log("Labels:", labels); // Verifica las etiquetas
+    console.log("Data:", data); // Verifica los valores
+
     const maxValue = Math.max(...data);
-    const maxChartValue = maxValue * 1.1; // Ajusta el máximo del gráfico a un 10% más del valor máximo
+    const maxChartValue = maxValue + 5; // Ajusta el máximo del gráfico
 
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
@@ -1144,7 +1150,7 @@ async function displayPortfolioValueChart() {
                     },
                     beginAtZero: true,
                     min: 0,
-                    max: maxChartValue // Establece el máximo del gráfico
+                    max: maxChartValue // Ajusta el máximo del eje Y
                 }
             }
         }
@@ -1154,7 +1160,7 @@ async function displayPortfolioValueChart() {
 
 async function fetchPortfolioValues() {
     const token = await getToken();
-    const response = await fetch('/api/users/balanceHistory', {
+    const response = await fetch('/api/portfolio-values', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -1163,12 +1169,15 @@ async function fetchPortfolioValues() {
     });
 
     if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        console.log("Portfolio Values:", data); // Verifica los datos obtenidos
+        return data;
     } else {
-        console.error('Failed to fetch portfolio values');
+        console.error("Failed to fetch portfolio values");
         return [];
     }
 }
+
 
 document.getElementById('autoAddCrypto').addEventListener('change', async function () {
     const preference = this.checked;
