@@ -171,13 +171,13 @@ router.get('/user-transactions', auth, async (req, res) => {
             .sort({date: -1})
             .populate('userFrom', 'username publicAddress')
             .populate('userTo', 'username publicAddress');
+
         res.json(transactions);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
-
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;
 
