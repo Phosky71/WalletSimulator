@@ -138,7 +138,6 @@ router.post('/confirm', auth, async (req, res) => {
 });
 
 // Obtener transacciones con filtros opcionales
-// Obtener transacciones con filtros opcionales
 router.get('/user-transactions', auth, async (req, res) => {
     const {address, symbol, type, startDate, endDate} = req.query;
 
@@ -191,75 +190,50 @@ router.get('/user-transactions', auth, async (req, res) => {
     }
 });
 
-
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;
-
-    console.log('Datos recibidos:', req.body); // Verificar que los datos estén llegando correctamente
+    const numericAmount = parseFloat(amount); // Convertir el monto a número
 
     try {
-        // Verificar que el usuario tenga suficiente saldo
-        const senderCrypto = await Crypto.findOne({user: req.user.id, uid});
-        console.log('Saldo del remitente:', senderCrypto); // Verificar que el remitente tenga el token
-
-        if (!senderCrypto || senderCrypto.amount < amount) {
-            console.log('Insufficient balance or token not found');
-            return res.status(400).json({msg: 'Insufficient balance'});
-        }
-
-        // Intentar actualizar el saldo del remitente
-        const updatedSenderCrypto = await Crypto.findOneAndUpdate(
-            {user: req.user.id, uid, amount: senderCrypto.amount},
-            {$inc: {amount: -amount}},
+        // Verificar que el remitente tenga suficiente saldo
+        const senderCrypto = await Crypto.findOneAndUpdate(
+            {user: req.user.id, uid, amount: {$gte: numericAmount}},
+            {$inc: {amount: -numericAmount}}, // Restar saldo del remitente
             {new: true}
         );
 
-        if (!updatedSenderCrypto) {
-            // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
-            // Volver a intentarlo
-            return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
+        if (!senderCrypto) {
+            return res.status(400).json({msg: 'Insufficient balance or token not found'});
         }
-        console.log('Saldo del remitente actualizado:', updatedSenderCrypto.amount);
 
-        // Buscar el usuario receptor por su dirección pública
+        // Buscar al receptor por su dirección pública
         const receiver = await User.findOne({publicAddress: receiverAddress});
-        console.log('Receptor encontrado:', receiver); // Verificar que el receptor exista
-
         if (!receiver) {
-            console.log('Receiver not found');
+            // Revertir saldo del remitente si no se encuentra el receptor
+            await Crypto.findOneAndUpdate(
+                {user: req.user.id, uid},
+                {$inc: {amount: numericAmount}} // Revertir deducción del saldo
+            );
             return res.status(404).json({msg: 'Receiver not found'});
         }
 
-        // Buscar si el receptor ya tiene el token en su portafolio
-        let receiverCrypto = await Crypto.findOne({user: receiver._id, uid});
-        console.log('Token del receptor:', receiverCrypto); // Verificar si el receptor ya tiene el token
+        // Actualizar o crear el saldo del receptor
+        let receiverCrypto = await Crypto.findOneAndUpdate(
+            {user: receiver._id, uid},
+            {$inc: {amount: numericAmount}}, // Sumar saldo al receptor
+            {new: true}
+        );
 
-        if (receiverCrypto) {
-            // Intentar actualizar el saldo del receptor
-            const updatedReceiverCrypto = await Crypto.findOneAndUpdate(
-                {user: receiver._id, uid, amount: receiverCrypto.amount},
-                {$inc: {amount: amount}},
-                {new: true}
-            );
-
-            if (!updatedReceiverCrypto) {
-                // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
-                // Volver a intentarlo
-                return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
-            }
-            receiverCrypto = updatedReceiverCrypto;
-        } else {
-            // Si el receptor no tiene el token, crear un nuevo registro
+        if (!receiverCrypto) {
             receiverCrypto = new Crypto({
                 user: receiver._id,
                 uid,
                 name,
                 symbol,
-                amount: parseFloat(amount)
+                amount: numericAmount
             });
             await receiverCrypto.save();
         }
-        console.log('Saldo del receptor actualizado:', receiverCrypto.amount);
 
         // Generar un hash único para la transacción
         let hash;
@@ -267,28 +241,126 @@ router.post('/send', auth, async (req, res) => {
         while (hashExists) {
             hash = crypto.createHash('sha256').update(Date.now().toString() + req.user.id).digest('hex');
             hashExists = await Transaction.findOne({hash});
-            console.log('Hash generado:', hash); // Verificar que el hash sea único
         }
 
-        // Registrar la transacción
+        // Registrar la transacción como 'send'
         const transaction = new Transaction({
-            hash: hash,
+            hash,
             userFrom: req.user.id,
             userTo: receiver._id,
-            symbol: symbol,
-            toToken: symbol,
-            amount: amount,
-            type: 'send'
+            symbol,
+            fromAmount: numericAmount, // Obligatorio según tu modelo
+            toAmount: numericAmount,   // Obligatorio según tu modelo
+            type: 'send'               // Siempre será 'send' en esta función
         });
+
         await transaction.save();
-        console.log('Transacción registrada:', transaction);
 
         res.json({msg: 'Transaction successful'});
+
     } catch (err) {
         console.error('Failed to send token', err);
         res.status(500).json({msg: 'Server error'});
     }
 });
+
+// router.post('/send', auth, async (req, res) => {
+//     const {uid, name, symbol, amount, receiverAddress} = req.body;
+//
+//     console.log('Datos recibidos:', req.body); // Verificar que los datos estén llegando correctamente
+//
+//     try {
+//         // Verificar que el usuario tenga suficiente saldo
+//         const senderCrypto = await Crypto.findOne({user: req.user.id, uid});
+//         console.log('Saldo del remitente:', senderCrypto); // Verificar que el remitente tenga el token
+//
+//         if (!senderCrypto || senderCrypto.amount < amount) {
+//             console.log('Insufficient balance or token not found');
+//             return res.status(400).json({msg: 'Insufficient balance'});
+//         }
+//
+//         // Intentar actualizar el saldo del remitente
+//         const updatedSenderCrypto = await Crypto.findOneAndUpdate(
+//             {user: req.user.id, uid, amount: senderCrypto.amount},
+//             {$inc: {amount: -amount}},
+//             {new: true}
+//         );
+//
+//         if (!updatedSenderCrypto) {
+//             // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
+//             // Volver a intentarlo
+//             return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
+//         }
+//         console.log('Saldo del remitente actualizado:', updatedSenderCrypto.amount);
+//
+//         // Buscar el usuario receptor por su dirección pública
+//         const receiver = await User.findOne({publicAddress: receiverAddress});
+//         console.log('Receptor encontrado:', receiver); // Verificar que el receptor exista
+//
+//         if (!receiver) {
+//             console.log('Receiver not found');
+//             return res.status(404).json({msg: 'Receiver not found'});
+//         }
+//
+//         // Buscar si el receptor ya tiene el token en su portafolio
+//         let receiverCrypto = await Crypto.findOne({user: receiver._id, uid});
+//         console.log('Token del receptor:', receiverCrypto); // Verificar si el receptor ya tiene el token
+//
+//         if (receiverCrypto) {
+//             // Intentar actualizar el saldo del receptor
+//             const updatedReceiverCrypto = await Crypto.findOneAndUpdate(
+//                 {user: receiver._id, uid, amount: receiverCrypto.amount},
+//                 {$inc: {amount: amount}},
+//                 {new: true}
+//             );
+//
+//             if (!updatedReceiverCrypto) {
+//                 // Si no se actualizó, significa que alguien más actualizó el saldo mientras tanto
+//                 // Volver a intentarlo
+//                 return res.status(409).json({msg: 'Concurrent update detected. Please try again.'});
+//             }
+//             receiverCrypto = updatedReceiverCrypto;
+//         } else {
+//             // Si el receptor no tiene el token, crear un nuevo registro
+//             receiverCrypto = new Crypto({
+//                 user: receiver._id,
+//                 uid,
+//                 name,
+//                 symbol,
+//                 amount: parseFloat(amount)
+//             });
+//             await receiverCrypto.save();
+//         }
+//         console.log('Saldo del receptor actualizado:', receiverCrypto.amount);
+//
+//         // Generar un hash único para la transacción
+//         let hash;
+//         let hashExists = true;
+//         while (hashExists) {
+//             hash = crypto.createHash('sha256').update(Date.now().toString() + req.user.id).digest('hex');
+//             hashExists = await Transaction.findOne({hash});
+//             console.log('Hash generado:', hash); // Verificar que el hash sea único
+//         }
+//
+//         // Registrar la transacción
+//         const transaction = new Transaction({
+//             hash: hash,
+//             userFrom: req.user.id,
+//             userTo: receiver._id,
+//             symbol: symbol,
+//             toToken: symbol,
+//             amount: amount,
+//             type: 'send'
+//         });
+//         await transaction.save();
+//         console.log('Transacción registrada:', transaction);
+//
+//         res.json({msg: 'Transaction successful'});
+//     } catch (err) {
+//         console.error('Failed to send token', err);
+//         res.status(500).json({msg: 'Server error'});
+//     }
+// });
 
 
 module.exports = router;

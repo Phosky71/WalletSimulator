@@ -30,11 +30,15 @@ const TransactionSchema = new mongoose.Schema({
     },
     fromAmount: {
         type: Number,
-        required: true
+        required: function () {
+            return this.type === 'send' || this.type === 'exchange';
+        }
     },
     toAmount: {
         type: Number,
-        required: true
+        required: function () {
+            return this.type === 'send' || this.type === 'exchange';
+        }
     },
     type: {
         type: String,
@@ -47,6 +51,6 @@ const TransactionSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('transaction', TransactionSchema);
 
-//TODO puedes hacer que en el historial de transacciones en vez del adress salga el nombre de usuario y cauando pases por encima de un nombre de usuario salga un tooltip que diga "Pulsa para copiar publicAddress" y cuando pulses se copie a tú portapapeles el address público
+
+module.exports = mongoose.model('transaction', TransactionSchema);
