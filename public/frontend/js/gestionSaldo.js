@@ -120,20 +120,41 @@ document.getElementById('buyModal').querySelector('.btn-primary').addEventListen
 //     });
 // }
 async function displayCryptocurrencies(cryptocurrencies) {
-    // Actualizar userCryptocurrencies
-    userCryptocurrencies = await fetchUserCryptocurrencies();
-
     const selectElement = document.getElementById('cryptocurrencySelect');
     cryptocurrencies.forEach(crypto => {
-        // Verificar si el token ya ha sido agregado al portafolio del usuario
         const userCrypto = userCryptocurrencies.find(userCrypto => userCrypto.name === crypto.name);
         if (!userCrypto) {
             const optionElement = document.createElement('option');
             optionElement.value = crypto.uid;
             optionElement.textContent = crypto.name;
             selectElement.appendChild(optionElement);
+            // Agregar criptomonedas automáticamente si la preferencia está activada
+            addCryptocurrencyAutomatically(crypto);
         }
     });
+}
+
+async function addCryptocurrencyAutomatically(cryptocurrency) {
+    const token = await getToken();
+    try {
+        const response = await fetch('/api/getSettings', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const settings = await response.json();
+            if (settings.addCryptoAutomatically) {
+                await addCryptocurrencyToPortfolio(cryptocurrency.uid);
+            }
+        } else {
+            console.error('Failed to load settings');
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
 }
 
 async function fetchCryptocurrencies() {
@@ -1075,3 +1096,50 @@ async function fetchPortfolioValues() {
         return [];
     }
 }
+
+document.getElementById('addCryptoAutomatically').addEventListener('change', async function() {
+    const preference = this.checked;
+    const token = await getToken();
+    try {
+        const response = await fetch('/api/saveSettings', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ settings: { addCryptoAutomatically: preference } })
+        });
+        if (response.ok) {
+            console.log('Settings saved successfully');
+        } else {
+            console.error('Failed to save settings');
+        }
+    } catch (error) {
+        console.error('Error saving settings:', error);
+    }
+});
+
+async function loadSettings() {
+    const token = await getToken();
+    try {
+        const response = await fetch('/api/getSettings', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (response.ok) {
+            const settings = await response.json();
+            document.getElementById('addCryptoAutomatically').checked = settings.addCryptoAutomatically;
+        } else {
+            console.error('Failed to load settings');
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+}
+
+// Llamar a loadSettings cuando se abran los ajustes
+document.getElementById('settingsButton').addEventListener('click', loadSettings);
+
