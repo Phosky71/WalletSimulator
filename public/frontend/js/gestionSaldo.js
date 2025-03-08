@@ -70,6 +70,8 @@ document.getElementById('showConfirmExchangeModalButton').addEventListener('clic
 
         const exchangeInfo = await confirmExchange(fromTokenUid, toTokenUid, amount);
 
+        console.log('Exchange info:', exchangeInfo);
+
         document.getElementById('confirmFromToken').textContent = fromTokenSelect.options[fromTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmToToken').textContent = toTokenSelect.options[toTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmExchangeRate').textContent = `${exchangeInfo.exchangeRate.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
@@ -79,7 +81,7 @@ document.getElementById('showConfirmExchangeModalButton').addEventListener('clic
             backdrop: 'static',
             keyboard: false
         }).modal('show');
-        console.log(fromTokenUid, toTokenUid, amount);
+
         startCountdown(30, fromTokenUid, toTokenUid, amount);
     } catch (error) {
         console.error('Error confirming exchange:', error);
