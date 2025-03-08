@@ -443,9 +443,9 @@ async function verifyToken() {
 
 
 async function confirmExchange(fromTokenUid, toTokenUid, amount) {
-    console.log("Hpña:" + fromTokenUid, toTokenUid, amount);
-    const token = await getToken();
-    const response = await fetch('/api/transactions/confirm', {
+    const token = await getToken()
+    console.log(fromTokenUid, toTokenUid, amount);
+    const response = await fetch(`/api/transactions/exchange`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
