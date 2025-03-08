@@ -443,6 +443,7 @@ async function verifyToken() {
 
 
 async function confirmExchange(fromTokenUid, toTokenUid, amount) {
+    console.log("Hpña:" + fromTokenUid, toTokenUid, amount);
     const token = await getToken();
     const response = await fetch('/api/transactions/confirm', {
         method: 'POST',
