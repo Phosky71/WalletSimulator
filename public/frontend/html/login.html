@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="/frontend/css/check.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+          integrity="sha512-MV7K8eL8cytqQXVLjpKME1JewMaaK0FTgZsVjZos+plXt9ISeCc9EXGmPraYgSEh8dA5W3GXeNxtunacxV+eN"
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <script src="/frontend/js/login.js" defer></script>
     <title>Login & Register</title>
 
@@ -44,21 +47,46 @@
 </head>
 <body>
 
-<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalCenterTitle"
+<!--<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalCenterTitle"-->
+<!--     aria-hidden="true">-->
+<!--    <div class="modal-dialog modal-dialog-centered" role="document">-->
+<!--        <div class="modal-content" style="background: rgba(255, 255, 255, 0.9);">-->
+<!--            <div class="modal-header justify-content-center">-->
+<!--                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">-->
+<!--                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>-->
+<!--                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>-->
+<!--                </svg>-->
+<!--            </div>-->
+<!--            <div class="modal-body" id="successModalContent"></div>-->
+<!--            <div class="modal-footer justify-content-center"></div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!-- Modal de éxito -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel"
      aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="background: rgba(255, 255, 255, 0.9);">
-            <div class="modal-header justify-content-center">
-                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-                </svg>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Registro Exitoso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <div class="modal-body" id="successModalContent"></div>
-            <div class="modal-footer justify-content-center"></div>
+            <div class="modal-body text-center">
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle fa-3x text-success"></i>
+                    <h4>Registro Correcto</h4>
+                    <p>Tu cuenta ha sido creada exitosamente.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
         </div>
     </div>
 </div>
+
 
 <!-- Error Modal -->
 <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalCenterTitle"
