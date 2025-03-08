@@ -1106,6 +1106,9 @@ async function displayPortfolioValueChart() {
     const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
     const data = aggregatedValues.map(entry => parseFloat(entry.balance));
 
+    const maxValue = Math.max(...data);
+    const maxChartValue = maxValue * 1.1; // Ajusta el máximo del gráfico a un 10% más del valor máximo
+
     const ctx = document.getElementById('portfolioValueChart').getContext('2d');
     new Chart(ctx, {
         type: 'line',
@@ -1125,11 +1128,7 @@ async function displayPortfolioValueChart() {
                 legend: {
                     display: true,
                     position: 'top'
-                },
-                // tooltip: {
-                //     callbacks: {
-                //     }
-                // }
+                }
             },
             scales: {
                 x: {
@@ -1145,12 +1144,13 @@ async function displayPortfolioValueChart() {
                     },
                     beginAtZero: true,
                     min: 0,
-                    max: Math.max(...data) + 5
+                    max: maxChartValue // Establece el máximo del gráfico
                 }
             }
         }
     });
 }
+
 
 async function fetchPortfolioValues() {
     const token = await getToken();
