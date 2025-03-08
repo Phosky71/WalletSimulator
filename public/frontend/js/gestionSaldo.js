@@ -128,34 +128,32 @@ async function displayCryptocurrencies(cryptocurrencies) {
             optionElement.value = crypto.uid;
             optionElement.textContent = crypto.name;
             selectElement.appendChild(optionElement);
-            // Agregar criptomonedas automáticamente si la preferencia está activada
-            addCryptocurrencyAutomatically(crypto);
         }
     });
 }
 
-async function addCryptocurrencyAutomatically(cryptocurrency) {
-    const token = await getToken();
-    try {
-        const response = await fetch('/api/settings/getSettings', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (response.ok) {
-            const settings = await response.json();
-            if (settings.addCryptoAutomatically) {
-                await addCryptocurrencyToPortfolio(cryptocurrency.uid);
-            }
-        } else {
-            console.error('Failed to load settings');
-        }
-    } catch (error) {
-        console.error('Error loading settings:', error);
-    }
-}
+// async function addCryptocurrencyAutomatically(cryptocurrency) {
+//     const token = await getToken();
+//     try {
+//         const response = await fetch('/api/settings/getSettings', {
+//             method: 'GET',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'Authorization': `Bearer ${token}`
+//             }
+//         });
+//         if (response.ok) {
+//             const settings = await response.json();
+//             if (settings.addCryptoAutomatically) {
+//                 await addCryptocurrencyToPortfolio(cryptocurrency.uid);
+//             }
+//         } else {
+//             console.error('Failed to load settings');
+//         }
+//     } catch (error) {
+//         console.error('Error loading settings:', error);
+//     }
+// }
 
 async function fetchCryptocurrencies() {
     const token = await getToken()
