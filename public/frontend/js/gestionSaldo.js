@@ -64,11 +64,12 @@ document.getElementById('showConfirmExchangeModalButton').addEventListener('clic
         if (fromTokenUid === 'EUR' && toTokenUid === 'EUR') {
             correcto = false;
             $('#exchangeModal').modal('hide'); // Cerrar el modal
-            document.getElementById('exchangeAmount').value = ""; // Restablecer el campo de cantidad
+            document.getElementById('exchangeAmount').value = "";
             throw new Error('No puedes intercambiar EUR por EUR.');
         }
 
         const exchangeInfo = await confirmExchange(fromTokenUid, toTokenUid, amount);
+
         document.getElementById('confirmFromToken').textContent = fromTokenSelect.options[fromTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmToToken').textContent = toTokenSelect.options[toTokenSelect.selectedIndex].symbol;
         document.getElementById('confirmExchangeRate').textContent = `${exchangeInfo.exchangeRate.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
@@ -461,6 +462,7 @@ async function confirmExchange(fromTokenUid, toTokenUid, amount) {
 
     if (response.ok) {
         const exchangeInfo = await response.json();
+        console.log('Exchange confirmed');
         console.log(exchangeInfo);
         displayExchangeModal();
         return exchangeInfo; // Devuelve exchangeInfo
