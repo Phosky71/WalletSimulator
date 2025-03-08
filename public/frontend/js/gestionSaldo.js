@@ -821,6 +821,7 @@ async function fetchUserTransactions(address) {
 }
 
 async function displayUserTransactions(address) {
+
     const transactions = await fetchUserTransactions(address);
     const container = document.getElementById('transactionsContainer');
     container.innerHTML = ''; // Clear the container
@@ -889,7 +890,8 @@ async function fetchCryptoData(uid) {
 }
 
 document.getElementById('transactionsButton').addEventListener('click', async function () {
-    await displayUserTransactions(localStorage.getItem('publicAddress'));
+    const user = await fetchUserDetails();
+    await displayUserTransactions(user.publicAddress);
     $('#transactionsModal').modal('show');
 });
 

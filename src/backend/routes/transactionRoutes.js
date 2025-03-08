@@ -142,44 +142,35 @@ router.get('/user-transactions', auth, async (req, res) => {
     const {address, symbol, type, startDate, endDate} = req.query;
     const filter = {};
 
+    if (address) {
+        filter.$or = [{userFrom: address}, {userTo: address}];
+    }
+    if (symbol) {
+        filter.symbol = symbol;
+    }
+    if (type) {
+        filter.type = type;
+    }
+    if (startDate || endDate) {
+        filter.date = {};
+        if (startDate) {
+            filter.date.$gte = new Date(startDate);
+        }
+        if (endDate) {
+            filter.date.$lte = new Date(endDate);
+        }
+    }
+
+    console.log("filter");
     try {
-        if (address) {
-            const user = await User.findOne({publicAddress: address});
-            if (user) {
-                filter.$or = [{userFrom: user._id}, {userTo: user._id}];
-            } else {
-                return res.status(404).json({msg: 'User not found'});
-            }
-        }
-        console.log(address);
-        if (symbol) {
-            filter.symbol = symbol;
-        }
-        if (type) {
-            filter.type = type;
-        }
-        if (startDate || endDate) {
-            filter.date = {};
-            if (startDate) {
-                filter.date.$gte = new Date(startDate);
-            }
-            if (endDate) {
-                filter.date.$lte = new Date(endDate);
-            }
-        }
-
-
-        const transactions = await Transaction.find(filter)
-            .sort({date: -1})
-            .populate('userFrom', 'username publicAddress')
-            .populate('userTo', 'username publicAddress');
-        console.log(transactions);
+        const transactions = await Transaction.find(filter).sort({date: -1}).populate('userFrom', 'username publicAddress').populate('userTo', 'username publicAddress');
         res.json(transactions);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
+
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;
 
