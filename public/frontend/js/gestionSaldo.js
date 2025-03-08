@@ -565,7 +565,7 @@ async function displayExchangeModal() {
         const exchangedAmountElement = document.getElementById('confirmExchangedAmount');
 
         // Asegúrate de que exchangeInfo esté definido
-        const exchangeInfo = await confirmExchange(fromTokenUid, toTokenUid, parseFloat(document.getElementById('exchangeAmount').value));
+        const exchangeInfo = confirmExchange(fromTokenUid, toTokenUid, parseFloat(document.getElementById('exchangeAmount').value));
 
         exchangeRateElement.textContent = `${exchangeInfo.exchangeRate.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
         exchangedAmountElement.textContent = `${exchangeInfo.exchangedAmount.toFixed(8)} ${toTokenUid === 'EUR' ? 'EUR' : toTokenSelect.options[toTokenSelect.selectedIndex].symbol}`;
