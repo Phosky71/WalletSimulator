@@ -119,8 +119,28 @@ document.getElementById('buyModal').querySelector('.btn-primary').addEventListen
 //         dataListElement.appendChild(optionElement);
 //     });
 // }
+// async function displayCryptocurrencies(cryptocurrencies) {
+//     const selectElement = document.getElementById('cryptocurrencySelect');
+//     cryptocurrencies.forEach(crypto => {
+//         const userCrypto = userCryptocurrencies.find(userCrypto => userCrypto.name === crypto.name);
+//         if (!userCrypto) {
+//             const optionElement = document.createElement('option');
+//             optionElement.value = crypto.uid;
+//             optionElement.textContent = crypto.name;
+//             selectElement.appendChild(optionElement);
+//         }
+//     });
+// }
+
 async function displayCryptocurrencies(cryptocurrencies) {
     const selectElement = document.getElementById('cryptocurrencySelect');
+    selectElement.innerHTML = ''; // Limpiar el select
+
+    // Asegurarse de que userCryptocurrencies esté cargada
+    if (!userCryptocurrencies) {
+        userCryptocurrencies = await fetchUserCryptocurrencies();
+    }
+
     cryptocurrencies.forEach(crypto => {
         const userCrypto = userCryptocurrencies.find(userCrypto => userCrypto.name === crypto.name);
         if (!userCrypto) {
@@ -131,6 +151,7 @@ async function displayCryptocurrencies(cryptocurrencies) {
         }
     });
 }
+
 
 // async function addCryptocurrencyAutomatically(cryptocurrency) {
 //     const token = await getToken();
