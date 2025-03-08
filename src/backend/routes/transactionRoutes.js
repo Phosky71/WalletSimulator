@@ -195,25 +195,36 @@ router.get('/user-transactions', auth, async (req, res) => {
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;
 
+    console.log('Datos recibidos:', req.body); // Verificar que los datos estén llegando correctamente
+
     try {
         // Verificar que el usuario tenga suficiente saldo
         const senderCrypto = await Crypto.findOne({user: req.user.id, uid});
+        console.log('Saldo del remitente:', senderCrypto); // Verificar que el remitente tenga el token
+
         if (!senderCrypto || senderCrypto.amount < amount) {
+            console.log('Insufficient balance or token not found');
             return res.status(400).json({msg: 'Insufficient balance'});
         }
 
         // Restar la cantidad del saldo del remitente
         senderCrypto.amount -= amount;
         await senderCrypto.save();
+        console.log('Saldo del remitente actualizado:', senderCrypto.amount);
 
         // Buscar el usuario receptor por su dirección pública
         const receiver = await User.findOne({publicAddress: receiverAddress});
+        console.log('Receptor encontrado:', receiver); // Verificar que el receptor exista
+
         if (!receiver) {
+            console.log('Receiver not found');
             return res.status(404).json({msg: 'Receiver not found'});
         }
 
         // Buscar si el receptor ya tiene el token en su portafolio
         let receiverCrypto = await Crypto.findOne({user: receiver._id, uid});
+        console.log('Token del receptor:', receiverCrypto); // Verificar si el receptor ya tiene el token
+
         if (receiverCrypto) {
             // Si el receptor ya tiene el token, sumar la cantidad
             receiverCrypto.amount += amount;
@@ -228,6 +239,7 @@ router.post('/send', auth, async (req, res) => {
             });
         }
         await receiverCrypto.save();
+        console.log('Saldo del receptor actualizado:', receiverCrypto.amount);
 
         // Generar un hash único para la transacción
         let hash;
@@ -235,6 +247,7 @@ router.post('/send', auth, async (req, res) => {
         while (hashExists) {
             hash = crypto.createHash('sha256').update(Date.now().toString() + req.user.id).digest('hex');
             hashExists = await Transaction.findOne({hash});
+            console.log('Hash generado:', hash); // Verificar que el hash sea único
         }
 
         // Registrar la transacción
@@ -248,6 +261,7 @@ router.post('/send', auth, async (req, res) => {
             type: 'send'
         });
         await transaction.save();
+        console.log('Transacción registrada:', transaction);
 
         res.json({msg: 'Transaction successful'});
     } catch (err) {
@@ -255,4 +269,6 @@ router.post('/send', auth, async (req, res) => {
         res.status(500).json({msg: 'Server error'});
     }
 });
+
+
 module.exports = router;
