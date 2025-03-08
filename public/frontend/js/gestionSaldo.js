@@ -1,3 +1,5 @@
+let userCryptocurrencies = [];
+
 window.onload = async function () {
     verifyToken().then(async () => {
         const token = await getToken();
@@ -10,6 +12,7 @@ window.onload = async function () {
                 updateTotalBalance();
             });
             fetchUserCryptocurrencies().then(data => {
+                userCryptocurrencies = data;
                 displayUserCryptocurrencies(data);
                 displayExchangeTokens();
                 displayCryptoDistributionChart();
@@ -134,9 +137,8 @@ document.getElementById('buyModal').querySelector('.btn-primary').addEventListen
 
 async function displayCryptocurrencies(cryptocurrencies) {
     const selectElement = document.getElementById('cryptocurrencySelect');
-    selectElement.innerHTML = ''; // Limpiar el select
+    selectElement.innerHTML = '';
 
-    // Asegurarse de que userCryptocurrencies esté cargada
     if (!userCryptocurrencies) {
         userCryptocurrencies = await fetchUserCryptocurrencies();
     }
