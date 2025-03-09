@@ -1,6 +1,8 @@
 // src/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const Crypto = require('./Cripto');
+
 
 const UserSchema = new mongoose.Schema({
     username: {type: String, required: true, unique: true},
@@ -41,7 +43,6 @@ UserSchema.pre('findOneAndDelete', async function (next) {
     }
 });
 
-module.exports = mongoose.model('User', UserSchema);
 
 
 module.exports = mongoose.model('User', UserSchema);
