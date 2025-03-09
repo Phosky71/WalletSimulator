@@ -445,7 +445,6 @@ async function verifyToken() {
 
 async function confirmExchange(fromTokenUid, toTokenUid, amount) {
     const token = await getToken()
-    console.log(fromTokenUid, toTokenUid, amount);
     const response = await fetch(`/api/transactions/exchange`, {
         method: 'POST',
         headers: {
@@ -809,15 +808,12 @@ async function fetchUserTransactions(filterType = '', filterValue = '') {
     if (filterType && filterValue) params.append('filterType', filterType);
     if (filterValue) params.append('filterValue', filterValue);
 
-    console.log('Sending request with params:', params.toString()); // Log de los parámetros enviados
-
     const response = await fetch(`/api/transactions/user-transactions?${params.toString()}`, {
         headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}
     });
 
     if (response.ok) {
         const data = await response.json();
-        console.log('Received transactions:', data); // Log de la respuesta recibida
         return data;
     } else {
         console.error('Failed to fetch transactions');
@@ -833,7 +829,6 @@ document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item
     item.addEventListener('click', function () {
         // Obtener el tipo de filtro seleccionado
         currentFilterType = this.getAttribute('data-filter');
-        console.log('Selected filter type:', currentFilterType); // Log para verificar el filtro seleccionado
 
         // Mostrar u ocultar los inputs según el tipo de filtro
         if (currentFilterType === 'date') {
@@ -851,15 +846,11 @@ document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item
 
 
 async function displayUserTransactions(filterType = '', filterValue = '') {
-    console.log('Displaying transactions with filter:', {filterType, filterValue}); // Log del filtro aplicado
     const transactions = await fetchUserTransactions(filterType, filterValue);
     const container = document.getElementById('transactionsContainer');
     container.innerHTML = '';
 
-    console.log('Transactions to display:', transactions); // Log de las
-
     for (const transaction of transactions) {
-        console.log('Transaction:', transaction); // Log de la transacción actual
         const transactionElement = document.createElement('tr');
 
         const date = transaction.date ? new Date(transaction.date).toLocaleDateString('es-ES') : '';
@@ -967,17 +958,14 @@ let selectedFilter = 'hash';
 // });
 
 document.getElementById('transactionSearch').addEventListener('input', async function () {
-    console.log('Search input value:', this.value.trim());
     if (currentFilterType) {
         await displayUserTransactions(currentFilterType, this.value.trim());
     }
 });
 
 document.getElementById('transactionDate').addEventListener('input', async function () {
-    console.log('Date input value:', this.value.trim());
     if (currentFilterType === 'date') {
         const isoDate = new Date(this.value.trim()).toISOString().split('T')[0];
-        console.log('Formatted ISO date:', isoDate);
         await displayUserTransactions(currentFilterType, isoDate);
     }
 });
@@ -1143,7 +1131,7 @@ async function displayPortfolioValueChart() {
 
     const response = await fetch(`/api/users/balanceHistory?publicAddress=${publicAddress}`, {
         method: 'GET',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
     });
 
     if (response.ok) {
@@ -1172,7 +1160,8 @@ async function displayPortfolioValueChart() {
                 scales: {
                     x: { // Configuración de la escala X
                         type: 'time', // Escala de tiempo
-                        time: {unit: 'day'}, // Agrupación por días
+                        time: { unit: 'day' }, // Agrupación por días
+                        adapters: { date: { locale: 'en-US' } }, // Opcional para configurar el idioma
                         title: {
                             display: true,
                             text: 'Date'
@@ -1192,6 +1181,7 @@ async function displayPortfolioValueChart() {
         console.error('Failed to fetch balance history');
     }
 }
+
 
 
 // Obtener publicAddress del usuario actual

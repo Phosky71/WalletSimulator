@@ -8,6 +8,7 @@ const router = express.Router();
 const crypto = require('crypto'); // Para generar un hash único
 const axios = require('axios');
 
+
 //Cambiar criptomonedas
 router.post('/exchange', auth, async (req, res) => {
     const {fromToken, toToken, amount} = req.body;
@@ -116,7 +117,7 @@ router.post('/confirm', auth, async (req, res) => {
         const transaction = new Transaction({
             hash: hash,
             userFrom: req.user.id,
-            userTo: req.user.id, //TODO Neceario reajuste para userTo
+            userTo: req.user.id,
             symbol: fromToken,
             toToken: toToken,
             fromAmount: amount,
@@ -139,55 +140,55 @@ router.post('/confirm', auth, async (req, res) => {
 
 // Obtener transacciones con filtros opcionales
 router.get('/user-transactions', auth, async (req, res) => {
-    const {filterType, filterValue} = req.query;
+    const { filterType, filterValue } = req.query;
     let filter = {};
-
-    console.log('Filtro:', filterType, filterValue);
 
     try {
         if (filterType && filterValue) {
             switch (filterType) {
                 case 'hash':
-                    filter.hash = filterValue;
+                    filter.hash = { $regex: filterValue, $options: 'i' }; // Búsqueda parcial, insensible a mayúsculas/minúsculas
                     break;
                 case 'userFrom':
-                    const userFrom = await User.findOne({publicAddress: filterValue});
-                    if (!userFrom) return res.status(404).json({msg: 'User From not found'});
+                    const userFrom = await User.findOne({ publicAddress: { $regex: filterValue, $options: 'i' } });
+                    if (!userFrom) return res.status(404).json({ msg: 'User From not found' });
                     filter.userFrom = userFrom._id;
                     break;
                 case 'userTo':
-                    const userTo = await User.findOne({publicAddress: filterValue});
-                    if (!userTo) return res.status(404).json({msg: 'User not found'});
+                    const userTo = await User.findOne({ publicAddress: { $regex: filterValue, $options: 'i' } });
+                    if (!userTo) return res.status(404).json({ msg: 'User To not found' });
                     filter.userTo = userTo._id;
                     break;
                 case 'symbol':
-                    filter.symbol = filterValue;
+                    filter.symbol = { $regex: filterValue, $options: 'i' }; // Búsqueda parcial para símbolos
                     break;
                 case 'toToken':
-                    filter.toToken = filterValue;
+                    filter.toToken = { $regex: filterValue, $options: 'i' }; // Búsqueda parcial para tokens destino
                     break;
                 case 'fromAmount':
-                    filter.fromAmount = parseFloat(filterValue);
+                    filter.fromAmount = { $gte: parseFloat(filterValue) }; // Búsqueda por cantidad mayor o igual
                     break;
                 case 'toAmount':
-                    filter.toAmount = parseFloat(filterValue);
+                    filter.toAmount = { $gte: parseFloat(filterValue) }; // Búsqueda por cantidad mayor o igual
                     break;
                 case 'date':
                     const dateStart = new Date(filterValue);
                     const dateEnd = new Date(filterValue);
                     dateEnd.setHours(23, 59, 59, 999);
-                    filter.date = {$gte: dateStart, $lte: dateEnd};
+                    filter.date = { $gte: dateStart, $lte: dateEnd };
                     break;
+                default:
+                    return res.status(400).json({ msg: 'Invalid filter type' });
             }
         }
 
-        console.log('Filtro:', filter);
+        console.log('Filter applied:', filter); // Log para depuración
 
         const transactions = await Transaction.find(filter)
-            .sort({date: -1})
+            .sort({ date: -1 })
             .populate('userFrom', 'username publicAddress')
             .populate('userTo', 'username publicAddress');
-        console.log('Filtered transactions:', transactions);
+
         res.json(transactions);
     } catch (err) {
         console.error(err.message);
