@@ -100,7 +100,7 @@ router.post('/updateBalance', auth, async (req, res) => {
 
 router.get('/balanceHistory', async (req, res) => {
     try {
-        const {publicAddress} = req.query; 
+        const {publicAddress} = req.query;
 
         if (!publicAddress) {
             return res.status(400).json({msg: 'Public address is required'});
@@ -130,7 +130,7 @@ router.get('/balanceHistory', async (req, res) => {
         res.status(500).json({msg: 'Server error'});
     }
 });
-Cambio
+
 
 
 // Obtener detalles del usuario actual
