@@ -103,11 +103,29 @@ router.post('/updateBalance', auth, async (req, res) => {
 router.get('/balanceHistory', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
-        res.status(200).json(user.balanceHistory);
+        if (!user) return res.status(404).json({msg: 'User not found'});
+
+        // Agrupar balances por día y calcular la media
+        const balanceHistory = user.balanceHistory.reduce((acc, entry) => {
+            const dateKey = new Date(entry.date).toISOString().split('T')[0]; // Agrupar por día
+            if (!acc[date]) acc[date] = [];
+            acc[date].push(entry.balance);
+            return acc;
+        }, {});
+
+        // Calcular medias diarias
+        const averagedBalanceHistory = Object.entries(balanceByDate).map(([date, balances]) => ({
+            date,
+            balance: balances.reduce((sum, val) => sum + val, 0) / balances.length
+        })).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        res.status(200).json(averagedBalanceHistory);
     } catch (err) {
+        console.error(err.message);
         res.status(500).json({msg: 'Server error'});
     }
 });
+
 
 // Obtener detalles del usuario actual
 router.get('/me', auth, getUserDetails);

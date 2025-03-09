@@ -18,6 +18,7 @@ window.onload = async function () {
                 displayCryptoDistributionChart();
             });
             await loadSendCryptoOptions();
+            preventNegativeInputs();
         }
     });
 };
@@ -842,10 +843,10 @@ document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item
     });
 });
 
-document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item=>{
-    item.addEventListener('click',function(){
-        currentFilterType=this.dataset.filter;
-        document.getElementById('filterDropdownButton').innerHTML=`<i class="fas fa-filter"></i> ${this.textContent}`;
+document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item => {
+    item.addEventListener('click', function () {
+        currentFilterType = this.dataset.filter;
+        document.getElementById('filterDropdownButton').innerHTML = `<i class="fas fa-filter"></i> ${this.textContent}`;
     });
 });
 
@@ -869,8 +870,8 @@ async function displayUserTransactions(filterType = '', filterValue = '') {
 
         transactionElement.innerHTML += `
             <td>${transaction.hash}</td>
-            <td class="user-tooltip" data-address="${userFromAddress}">${userFrom}</td>
-            <td class="user-tooltip" data-address="${userToAddress}">${userTo}</td>
+            <td class="user-tooltip" data-address="${userFromAddress}">${userFromName}</td>
+            <td class="user-tooltip" data-address="${userToAddress}">${userToName}</td>
             <td>${transaction.symbol}</td>
             <td>${transaction.toToken || ''}</td>
             <td>${transaction.fromAmount}</td>
@@ -920,10 +921,10 @@ async function fetchCryptoData(uid) {
 //     $('#transactionsModal').modal('show');
 // });
 
-document.getElementById('transactionsButton').onclick=async()=>{
-    currentFilterType='';
-    document.getElementById('filterDropdownButton').innerHTML=`<i class="fas fa-filter"></i>`;
-    document.getElementById('transactionSearch').value='';
+document.getElementById('transactionsButton').onclick = async () => {
+    currentFilterType = '';
+    document.getElementById('filterDropdownButton').innerHTML = `<i class="fas fa-filter"></i>`;
+    document.getElementById('transactionSearch').value = '';
     await displayUserTransactions();
     $('#transactionsModal').modal('show');
 };
@@ -1136,85 +1137,79 @@ function aggregatePortfolioValues(portfolioValues) {
 
 
 async function displayPortfolioValueChart() {
-    const portfolioValues = await fetchPortfolioValues(); // Obtener los valores del portafolio
-    const aggregatedValues = aggregatePortfolioValues(portfolioValues); // Agregar valores por fecha
-
-    if (!aggregatedValues || aggregatedValues.length === 0) {
-        console.error("No data available for the chart");
-        return; // Salir si no hay datos para graficar
-    }
-
-    const labels = aggregatedValues.map(entry => new Date(entry.date).toLocaleDateString());
-    const data = aggregatedValues.map(entry => parseFloat(entry.balance));
-
-    console.log("Labels:", labels); // Verificar las etiquetas (fechas)
-    console.log("Data:", data); // Verificar los valores (balances)
-
-    const maxValue = Math.max(...data);
-    const maxChartValue = maxValue + 5; // Ajustar el máximo del gráfico
-
-    const ctx = document.getElementById('portfolioValueChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Portfolio Value',
-                data: data,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Value ($)'
-                    },
-                    beginAtZero: true,
-                    min: 0,
-                    max: maxChartValue // Establecer el máximo dinámico en función de los datos
-                }
-            }
-        }
-    });
-}
-
-
-async function fetchPortfolioValues() {
-    const token = await getToken(); // Obtener el token del usuario
+    const token = await getToken();
     const response = await fetch('/api/users/balanceHistory', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            //TODO Enviar algo para que el back pueda hacer req.user.id
+            'credentials': 'include'
         }
     });
 
-    if (!response.ok) {
-        console.error('Failed to fetch portfolio values');
-        return [];
-    }
+    if (response.ok) {
+        const data = await response.json();
 
-    const balanceHistory = await response.json();
-    console.log("Balance History:", balanceHistory); // Verifica los datos obtenidos
-    return balanceHistory;
+        // Ordenar datos por fecha
+        data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // Preparar datos para el gráfico
+        const labels = data.map(entry => entry.date);
+        const balances = data.map(entry => parseFloat(entry.balance));
+
+        // Dibujar gráfico usando Chart.js (ejemplo)
+        const ctx = document.getElementById('portfolioValueChart').getContext('2d');
+
+        if (window.portfolioChart instanceof Chart) {
+            window.portfolioChart.destroy();
+        }
+
+        window.portfolioChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(entry => entry.date),
+                datasets: [{
+                    label: 'Average Portfolio Value Over Time',
+                    data: data.map(entry => entry.balance),
+                    borderColor: 'rgba(75,192,192,1)',
+                    backgroundColor: 'rgba(75,192,192,0.2)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{ type: 'time', time: { unit: 'day' } }],
+                    yAxes: [{ ticks: { beginAtZero: false } }]
+                }
+            }
+        });
+    } else {
+        console.error('Failed to fetch balance history');
+    }
 }
+
+
+// async function fetchPortfolioValues() {
+//     const token = await getToken(); // Obtener el token del usuario
+//     const response = await fetch('/api/users/balanceHistory', {
+//         method: 'GET',
+//         headers: {
+//             'Content-Type': 'application/json',
+//             'Authorization': `Bearer ${token}`
+//         }
+//     });
+//
+//     if (!response.ok) {
+//         console.error('Failed to fetch portfolio values');
+//         return [];
+//     }
+//
+//     const balanceHistory = await response.json();
+//     console.log("Balance History:", balanceHistory); // Verifica los datos obtenidos
+//     return balanceHistory;
+// }
 
 
 document.getElementById('autoAddCrypto').addEventListener('change', async function () {
@@ -1266,4 +1261,12 @@ document.getElementById('settingsButton').addEventListener('click', async functi
     $('#settingsModal').modal('show');
 });
 
-
+function preventNegativeInputs() {
+    const numericInputs = document.querySelectorAll('input[type="number"]');
+    numericInputs.forEach(input => {
+        input.setAttribute('min', '0');
+        input.addEventListener('input', () => {
+            if (parseFloat(input.value) < 0) input.value = '';
+        });
+    });
+}

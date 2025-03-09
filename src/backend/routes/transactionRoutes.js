@@ -138,7 +138,6 @@ router.post('/confirm', auth, async (req, res) => {
 });
 
 // Obtener transacciones con filtros opcionales
-// transactionRoutes.js
 router.get('/user-transactions', auth, async (req, res) => {
     const {filterType, filterValue} = req.query;
     let filter = {};
