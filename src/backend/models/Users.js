@@ -30,5 +30,18 @@ UserSchema.pre('save', async function (next) {
     next();
 });
 
+UserSchema.pre('findOneAndDelete', async function (next) {
+    const userId = this.getQuery()._id; // Obtén el ID del usuario que se va a eliminar
+    try {
+        // Elimina todas las criptomonedas asociadas al usuario
+        await Crypto.deleteMany({user: userId});
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
+module.exports = mongoose.model('User', UserSchema);
+
 
 module.exports = mongoose.model('User', UserSchema);

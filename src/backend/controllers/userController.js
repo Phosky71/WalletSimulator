@@ -99,9 +99,8 @@ exports.deleteUserProfile = async (req, res) => {
 
             const user = await User.findOneAndDelete({ publicAddress: req.user.publicAddress });
 
-            if (user) {
-                await Crypto.deleteMany({ user: user._id });
-                // await Transaction.deleteMany({ $or: [{ userFrom: user._id }, { userTo: user._id }] });
+            if (!user) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
 
             res.json({ msg: 'User and related data deleted' });
