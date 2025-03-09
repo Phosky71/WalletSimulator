@@ -142,6 +142,8 @@ router.get('/user-transactions', auth, async (req, res) => {
     const {filterType, filterValue} = req.query;
     let filter = {};
 
+    console.log('Filtro:', filterType, filterValue);
+
     try {
         if (filterType && filterValue) {
             switch (filterType) {
@@ -179,11 +181,13 @@ router.get('/user-transactions', auth, async (req, res) => {
             }
         }
 
+        console.log('Filtro:', filter);
+
         const transactions = await Transaction.find(filter)
             .sort({date: -1})
             .populate('userFrom', 'username publicAddress')
             .populate('userTo', 'username publicAddress');
-
+        console.log('Filtered transactions:', transactions);
         res.json(transactions);
     } catch (err) {
         console.error(err.message);

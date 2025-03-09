@@ -806,30 +806,36 @@ async function getToken() {
 async function fetchUserTransactions(filterType = '', filterValue = '') {
     const token = await getToken();
     const params = new URLSearchParams();
+    if (filterType && filterValue) params.append('filterType', filterType);
+    if (filterValue) params.append('filterValue', filterValue);
 
-    if (filterType && filterValue) params.append(filterType, filterValue);
+    console.log('Sending request with params:', params.toString()); // Log de los parámetros enviados
 
     const response = await fetch(`/api/transactions/user-transactions?${params.toString()}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}
     });
 
-    if (response.ok) return await response.json();
-
-    console.error('Failed to fetch transactions');
-    return [];
+    if (response.ok) {
+        const data = await response.json();
+        console.log('Received transactions:', data); // Log de la respuesta recibida
+        return data;
+    } else {
+        console.error('Failed to fetch transactions');
+        return [];
+    }
 }
 
 let currentFilterType = ''; // Variable global para guardar el filtro actual seleccionado
 
 // Listener para seleccionar filtro desde dropdown
+// Unificar los listeners para los elementos del dropdown
 document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item => {
     item.addEventListener('click', function () {
+        // Obtener el tipo de filtro seleccionado
         currentFilterType = this.getAttribute('data-filter');
+        console.log('Selected filter type:', currentFilterType); // Log para verificar el filtro seleccionado
 
-        // Mostrar input de fecha solo si se selecciona filtro de fecha
+        // Mostrar u ocultar los inputs según el tipo de filtro
         if (currentFilterType === 'date') {
             document.getElementById('transactionSearch').style.display = 'none';
             document.getElementById('transactionDate').style.display = 'block';
@@ -838,24 +844,22 @@ document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item
             document.getElementById('transactionSearch').style.display = 'block';
         }
 
-        document.getElementById('filterDropdownButton').innerHTML = `<i class="fas fa-filter"></i> ${item.textContent}`;
-        currentFilterType = item.getAttribute('data-filter');
-    });
-});
-
-document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item => {
-    item.addEventListener('click', function () {
-        currentFilterType = this.dataset.filter;
+        // Actualizar el texto del botón del dropdown
         document.getElementById('filterDropdownButton').innerHTML = `<i class="fas fa-filter"></i> ${this.textContent}`;
     });
 });
 
+
 async function displayUserTransactions(filterType = '', filterValue = '') {
+    console.log('Displaying transactions with filter:', {filterType, filterValue}); // Log del filtro aplicado
     const transactions = await fetchUserTransactions(filterType, filterValue);
     const container = document.getElementById('transactionsContainer');
     container.innerHTML = '';
 
+    console.log('Transactions to display:', transactions); // Log de las
+
     for (const transaction of transactions) {
+        console.log('Transaction:', transaction); // Log de la transacción actual
         const transactionElement = document.createElement('tr');
 
         const date = transaction.date ? new Date(transaction.date).toLocaleDateString('es-ES') : '';
@@ -963,11 +967,21 @@ let selectedFilter = 'hash';
 // });
 
 document.getElementById('transactionSearch').addEventListener('input', async function () {
-    const filterValue = this.value.trim(); // Obtener el valor del input
+    console.log('Search input value:', this.value.trim());
     if (currentFilterType) {
-        await displayUserTransactions(currentFilterType, filterValue); // Filtrar las transacciones
+        await displayUserTransactions(currentFilterType, this.value.trim());
     }
 });
+
+document.getElementById('transactionDate').addEventListener('input', async function () {
+    console.log('Date input value:', this.value.trim());
+    if (currentFilterType === 'date') {
+        const isoDate = new Date(this.value.trim()).toISOString().split('T')[0];
+        console.log('Formatted ISO date:', isoDate);
+        await displayUserTransactions(currentFilterType, isoDate);
+    }
+});
+
 
 // Event listener for date input
 // document.getElementById('transactionDate').addEventListener('input', function () {
@@ -984,22 +998,14 @@ document.getElementById('transactionSearch').addEventListener('input', async fun
 //     });
 // });
 
-document.getElementById('transactionDate').addEventListener('input', async function () {
-    const filterValue = this.value.trim(); // Obtener la fecha seleccionada
-    if (currentFilterType === 'date') {
-        await displayUserTransactions(currentFilterType, filterValue); // Filtrar por fecha
-    }
-});
-
-
-function resetFilters() {
-    const transactions = document.querySelectorAll('#transactionsContainer tr');
-    transactions.forEach(transaction => {
-        transaction.style.display = '';
-    });
-    document.getElementById('transactionSearch').value = '';
-    document.getElementById('transactionDate').value = '';
-}
+// function resetFilters() {
+//     const transactions = document.querySelectorAll('#transactionsContainer tr');
+//     transactions.forEach(transaction => {
+//         transaction.style.display = '';
+//     });
+//     document.getElementById('transactionSearch').value = '';
+//     document.getElementById('transactionDate').value = '';
+// }
 
 async function loadSendCryptoOptions() {
     const userCryptocurrencies = await fetchUserCryptocurrencies();
@@ -1143,6 +1149,7 @@ async function displayPortfolioValueChart() {
     if (response.ok) {
         const data = await response.json();
 
+        // Ordenar datos por fecha
         data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         const ctx = document.getElementById('portfolioValueChart').getContext('2d');
@@ -1159,19 +1166,33 @@ async function displayPortfolioValueChart() {
                     backgroundColor: 'rgba(75,192,192,0.2)',
                     borderWidth: 2,
                     fill: true,
-                }],
+                }]
             },
             options: {
                 scales: {
-                    xAxes: [{type: 'time', time: {unit: 'day'}}],
-                    yAxes: [{ticks: {beginAtZero: false}}],
-                },
-            },
+                    x: { // Configuración de la escala X
+                        type: 'time', // Escala de tiempo
+                        time: {unit: 'day'}, // Agrupación por días
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: { // Configuración de la escala Y
+                        type: 'linear',
+                        title: {
+                            display: true,
+                            text: 'Portfolio Value'
+                        }
+                    }
+                }
+            }
         });
     } else {
         console.error('Failed to fetch balance history');
     }
 }
+
 
 // Obtener publicAddress del usuario actual
 async function getPublicAddress() {
