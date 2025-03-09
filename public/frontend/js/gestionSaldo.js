@@ -962,14 +962,10 @@ let selectedFilter = 'hash';
 //     });
 // });
 
-document.getElementById('transactionSearch').addEventListener('keydown', async function (event) {
-    if (event.key === "Enter") {
-        const value = this.value.trim();
-        if (currentFilterType && value) {
-            await displayUserTransactions(currentFilterType, value);
-        } else {
-            alert("Selecciona primero un tipo de filtro");
-        }
+document.getElementById('transactionSearch').addEventListener('input', async function () {
+    const filterValue = this.value.trim(); // Obtener el valor del input
+    if (currentFilterType) {
+        await displayUserTransactions(currentFilterType, filterValue); // Filtrar las transacciones
     }
 });
 
@@ -988,10 +984,10 @@ document.getElementById('transactionSearch').addEventListener('keydown', async f
 //     });
 // });
 
-document.getElementById('transactionDate').addEventListener('change', async function () {
-    const date = this.value;
-    if (currentFilterType === 'date' && date) {
-        await displayUserTransactions(currentFilterType, date);
+document.getElementById('transactionDate').addEventListener('input', async function () {
+    const filterValue = this.value.trim(); // Obtener la fecha seleccionada
+    if (currentFilterType === 'date') {
+        await displayUserTransactions(currentFilterType, filterValue); // Filtrar por fecha
     }
 });
 
@@ -1137,33 +1133,20 @@ function aggregatePortfolioValues(portfolioValues) {
 
 
 async function displayPortfolioValueChart() {
-    const token = await getToken();
-    const response = await fetch('/api/users/balanceHistory', {
+    const publicAddress = await getPublicAddress(); // Obtener publicAddress del usuario
+
+    const response = await fetch(`/api/users/balanceHistory?publicAddress=${publicAddress}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            //TODO Enviar algo para que el back pueda hacer req.user.id
-            'credentials': 'include'
-        }
+        headers: {'Content-Type': 'application/json'},
     });
 
     if (response.ok) {
         const data = await response.json();
 
-        // Ordenar datos por fecha
         data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Preparar datos para el gráfico
-        const labels = data.map(entry => entry.date);
-        const balances = data.map(entry => parseFloat(entry.balance));
-
-        // Dibujar gráfico usando Chart.js (ejemplo)
         const ctx = document.getElementById('portfolioValueChart').getContext('2d');
-
-        if (window.portfolioChart instanceof Chart) {
-            window.portfolioChart.destroy();
-        }
+        if (window.portfolioChart instanceof Chart) window.portfolioChart.destroy();
 
         window.portfolioChart = new Chart(ctx, {
             type: 'line',
@@ -1175,18 +1158,29 @@ async function displayPortfolioValueChart() {
                     borderColor: 'rgba(75,192,192,1)',
                     backgroundColor: 'rgba(75,192,192,0.2)',
                     borderWidth: 2,
-                    fill: true
-                }]
+                    fill: true,
+                }],
             },
             options: {
                 scales: {
-                    xAxes: [{ type: 'time', time: { unit: 'day' } }],
-                    yAxes: [{ ticks: { beginAtZero: false } }]
-                }
-            }
+                    xAxes: [{type: 'time', time: {unit: 'day'}}],
+                    yAxes: [{ticks: {beginAtZero: false}}],
+                },
+            },
         });
     } else {
         console.error('Failed to fetch balance history');
+    }
+}
+
+// Obtener publicAddress del usuario actual
+async function getPublicAddress() {
+    const response = await fetch('/api/users/me', {method: 'GET'}); // Suponiendo que tienes una ruta para obtener los datos del usuario actual
+    if (response.ok) {
+        const user = await response.json();
+        return user.publicAddress;
+    } else {
+        throw new Error('Failed to fetch user public address');
     }
 }
 

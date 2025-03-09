@@ -1,4 +1,3 @@
-
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -50,7 +49,6 @@ router.post('/register', generatePublicAddress, async (req, res) => {
 });
 
 
-
 // Login de usuario
 router.post('/login', async (req, res) => {
     const {email, password} = req.body;
@@ -100,24 +98,31 @@ router.post('/updateBalance', auth, async (req, res) => {
     }
 });
 
-router.get('/balanceHistory', auth, async (req, res) => {
+router.get('/balanceHistory', async (req, res) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({msg: 'User not found'});
+        const {publicAddress} = req.query; 
+
+        if (!publicAddress) {
+            return res.status(400).json({msg: 'Public address is required'});
+        }
+
+        const user = await User.findOne({publicAddress}); // Buscar usuario por publicAddress
+        if (!user) {
+            return res.status(404).json({msg: 'User not found'});
+        }
 
         // Agrupar balances por día y calcular la media
-        const balanceHistory = user.balanceHistory.reduce((acc, entry) => {
+        const balanceByDate = user.balanceHistory.reduce((acc, entry) => {
             const dateKey = new Date(entry.date).toISOString().split('T')[0]; // Agrupar por día
-            if (!acc[date]) acc[date] = [];
-            acc[date].push(entry.balance);
+            if (!acc[dateKey]) acc[dateKey] = [];
+            acc[dateKey].push(entry.balance);
             return acc;
         }, {});
 
-        // Calcular medias diarias
         const averagedBalanceHistory = Object.entries(balanceByDate).map(([date, balances]) => ({
             date,
-            balance: balances.reduce((sum, val) => sum + val, 0) / balances.length
-        })).sort((a, b) => new Date(a.date) - new Date(b.date));
+            balance: balances.reduce((sum, val) => sum + val, 0) / balances.length,
+        }));
 
         res.status(200).json(averagedBalanceHistory);
     } catch (err) {
@@ -125,6 +130,7 @@ router.get('/balanceHistory', auth, async (req, res) => {
         res.status(500).json({msg: 'Server error'});
     }
 });
+Cambio
 
 
 // Obtener detalles del usuario actual
