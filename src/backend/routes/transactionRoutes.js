@@ -138,43 +138,45 @@ router.post('/confirm', auth, async (req, res) => {
 });
 
 // Obtener transacciones con filtros opcionales
+// transactionRoutes.js
 router.get('/user-transactions', auth, async (req, res) => {
-    const {address, symbol, type, startDate, endDate} = req.query;
-
+    const {filterType, filterValue} = req.query;
     let filter = {};
 
     try {
-        // Si se proporciona una dirección, buscar transacciones relacionadas con esa dirección
-        if (address) {
-            const user = await User.findOne({publicAddress: address});
-            if (user) {
-                filter.$or = [{userFrom: user._id}, {userTo: user._id}];
-            } else {
-                return res.status(404).json({msg: 'User not found'});
-            }
-        }
-
-        // Si no se proporciona dirección, mostrar todas las transacciones
-        if (!address) {
-            // No aplicar filtro por usuario
-        }
-
-        // Aplicar otros filtros si están presentes
-        if (symbol) {
-            filter.symbol = symbol;
-        }
-
-        if (type) {
-            filter.type = type;
-        }
-
-        if (startDate || endDate) {
-            filter.date = {};
-            if (startDate) {
-                filter.date.$gte = new Date(startDate);
-            }
-            if (endDate) {
-                filter.date.$lte = new Date(endDate);
+        if (filterType && filterValue) {
+            switch (filterType) {
+                case 'hash':
+                    filter.hash = filterValue;
+                    break;
+                case 'userFrom':
+                    const userFrom = await User.findOne({publicAddress: filterValue});
+                    if (!userFrom) return res.status(404).json({msg: 'User From not found'});
+                    filter.userFrom = userFrom._id;
+                    break;
+                case 'userTo':
+                    const userTo = await User.findOne({publicAddress: filterValue});
+                    if (!userTo) return res.status(404).json({msg: 'User not found'});
+                    filter.userTo = userTo._id;
+                    break;
+                case 'symbol':
+                    filter.symbol = filterValue;
+                    break;
+                case 'toToken':
+                    filter.toToken = filterValue;
+                    break;
+                case 'fromAmount':
+                    filter.fromAmount = parseFloat(filterValue);
+                    break;
+                case 'toAmount':
+                    filter.toAmount = parseFloat(filterValue);
+                    break;
+                case 'date':
+                    const dateStart = new Date(filterValue);
+                    const dateEnd = new Date(filterValue);
+                    dateEnd.setHours(23, 59, 59, 999);
+                    filter.date = {$gte: dateStart, $lte: dateEnd};
+                    break;
             }
         }
 
@@ -189,6 +191,7 @@ router.get('/user-transactions', auth, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 router.post('/send', auth, async (req, res) => {
     const {uid, name, symbol, amount, receiverAddress} = req.body;

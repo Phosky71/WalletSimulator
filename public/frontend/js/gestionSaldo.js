@@ -802,68 +802,90 @@ async function getToken() {
     }
 }
 
-async function fetchUserTransactions(address = '') {
+async function fetchUserTransactions(filterType = '', filterValue = '') {
     const token = await getToken();
-    const response = await fetch(`/api/transactions/user-transactions?address=${address}`, {
-        method: 'GET',
+    const params = new URLSearchParams();
+
+    if (filterType && filterValue) params.append(filterType, filterValue);
+
+    const response = await fetch(`/api/transactions/user-transactions?${params.toString()}`, {
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
         }
     });
 
-    console.log(response);
-    if (response.ok) {
-        return await response.json();
-    } else {
-        console.error('Failed to fetch user transactions');
-        return [];
-    }
+    if (response.ok) return await response.json();
+
+    console.error('Failed to fetch transactions');
+    return [];
 }
 
-async function displayUserTransactions(address = '') {
-    const transactions = await fetchUserTransactions(address);
+let currentFilterType = ''; // Variable global para guardar el filtro actual seleccionado
+
+// Listener para seleccionar filtro desde dropdown
+document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item => {
+    item.addEventListener('click', function () {
+        currentFilterType = this.getAttribute('data-filter');
+
+        // Mostrar input de fecha solo si se selecciona filtro de fecha
+        if (currentFilterType === 'date') {
+            document.getElementById('transactionSearch').style.display = 'none';
+            document.getElementById('transactionDate').style.display = 'block';
+        } else {
+            document.getElementById('transactionDate').style.display = 'none';
+            document.getElementById('transactionSearch').style.display = 'block';
+        }
+
+        document.getElementById('filterDropdownButton').innerHTML = `<i class="fas fa-filter"></i> ${item.textContent}`;
+        currentFilterType = item.getAttribute('data-filter');
+    });
+});
+
+document.querySelectorAll('#filterDropdownButton + .dropdown-menu .dropdown-item').forEach(item=>{
+    item.addEventListener('click',function(){
+        currentFilterType=this.dataset.filter;
+        document.getElementById('filterDropdownButton').innerHTML=`<i class="fas fa-filter"></i> ${this.textContent}`;
+    });
+});
+
+async function displayUserTransactions(filterType = '', filterValue = '') {
+    const transactions = await fetchUserTransactions(filterType, filterValue);
     const container = document.getElementById('transactionsContainer');
-    container.innerHTML = ''; // Clear the container
+    container.innerHTML = '';
 
     for (const transaction of transactions) {
         const transactionElement = document.createElement('tr');
 
-        const date = transaction.date ? new Date(transaction.date).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }) : '';
-
-        const userFrom = transaction.userFrom?.username || '';
-        const userTo = transaction.userTo?.username || '';
+        const date = transaction.date ? new Date(transaction.date).toLocaleDateString('es-ES') : '';
+        const userFromName = transaction.userFrom?.username || '';
+        const userToName = transaction.userTo?.username || '';
         const userFromAddress = transaction.userFrom?.publicAddress || '';
         const userToAddress = transaction.userTo?.publicAddress || '';
 
-        transactionElement.innerHTML = `
-            <td>${transaction.hash || ''}</td>
+        // Determinar tipo según si remitente y receptor son iguales
+        const transactionType =
+            transaction.userFrom?._id === transaction.userTo?._id ? 'exchange' : 'send';
+
+        transactionElement.innerHTML += `
+            <td>${transaction.hash}</td>
             <td class="user-tooltip" data-address="${userFromAddress}">${userFrom}</td>
             <td class="user-tooltip" data-address="${userToAddress}">${userTo}</td>
-            <td>${transaction.symbol || ''}</td>
+            <td>${transaction.symbol}</td>
             <td>${transaction.toToken || ''}</td>
-            <td>${transaction.fromAmount || ''}</td>
-            <td>${transaction.toAmount || ''}</td>
+            <td>${transaction.fromAmount}</td>
+            <td>${transaction.toAmount}</td>
             <td>${date}</td>
+            <td>${transactionType}</td>
         `;
 
         container.appendChild(transactionElement);
     }
 
+    // Añadir tooltips y copiar al portapapeles
     document.querySelectorAll('.user-tooltip').forEach(element => {
-        element.setAttribute('title', 'Pulsa para copiar publicAddress');
-        element.addEventListener('click', function () {
-            const address = this.getAttribute('data-address');
-            if (address) {
-                navigator.clipboard.writeText(address).then(() => {
-                    alert('Public address copied to clipboard');
-                });
-            }
-        });
+        element.title = 'Pulsa para copiar publicAddress';
+        element.onclick = () => navigator.clipboard.writeText(element.dataset.address).then(() => alert("Public address copiada"));
     });
 }
 
@@ -893,74 +915,85 @@ async function fetchCryptoData(uid) {
     }
 }
 
-document.getElementById('transactionsButton').addEventListener('click', async function () {
-    // const token = await getToken();
-    // const response = await fetch('/api/users/me', {
-    //     method: 'GET',
-    //     headers: {
-    //         'Authorization': `Bearer ${token}`
-    //     }
-    // });
-    //
-    // if (!response.ok) {
-    //     throw new Error('Failed to fetch user details');
-    // }
-    //
-    // const userDetails = await response.json();
-    // const publicAddress = userDetails.publicAddress;
+// document.getElementById('transactionsButton').addEventListener('click', async function () {
+//     await displayUserTransactions();
+//     $('#transactionsModal').modal('show');
+// });
+
+document.getElementById('transactionsButton').onclick=async()=>{
+    currentFilterType='';
+    document.getElementById('filterDropdownButton').innerHTML=`<i class="fas fa-filter"></i>`;
+    document.getElementById('transactionSearch').value='';
     await displayUserTransactions();
     $('#transactionsModal').modal('show');
-});
+};
 
 // Variable to store the selected filter
 let selectedFilter = 'hash';
 
-//TODO FIX DATE FILTER
-
 // Event listener for filter selection
-document.querySelectorAll('.dropdown-item').forEach(item => {
-    item.addEventListener('click', function () {
-        selectedFilter = this.getAttribute('data-filter');
-        resetFilters(); // Reset filters when filter method changes
-        if (selectedFilter === 'date') {
-            document.getElementById('transactionSearch').style.display = 'none';
-            document.getElementById('transactionDate').style.display = 'block';
-        } else {
-            document.getElementById('transactionSearch').style.display = 'block';
-            document.getElementById('transactionDate').style.display = 'none';
-        }
-    });
-});
+// document.querySelectorAll('.dropdown-item').forEach(item => {
+//     item.addEventListener('click', function () {
+//         selectedFilter = this.getAttribute('data-filter');
+//         resetFilters(); // Reset filters when filter method changes
+//         if (selectedFilter === 'date') {
+//             document.getElementById('transactionSearch').style.display = 'none';
+//             document.getElementById('transactionDate').style.display = 'block';
+//         } else {
+//             document.getElementById('transactionSearch').style.display = 'block';
+//             document.getElementById('transactionDate').style.display = 'none';
+//         }
+//     });
+// });
 
 // Event listener for search input
-document.getElementById('transactionSearch').addEventListener('input', function () {
-    const searchTerm = this.value.toLowerCase();
-    const transactions = document.querySelectorAll('#transactionsContainer tr');
+// document.getElementById('transactionSearch').addEventListener('input', function () {
+//     const searchTerm = this.value.toLowerCase();
+//     const transactions = document.querySelectorAll('#transactionsContainer tr');
+//
+//     transactions.forEach(transaction => {
+//         const filterText = transaction.querySelector(`td[data-filter="${selectedFilter}"]`).textContent.toLowerCase();
+//         if (filterText.includes(searchTerm)) {
+//             transaction.style.display = '';
+//         } else {
+//             transaction.style.display = 'none';
+//         }
+//     });
+// });
 
-    transactions.forEach(transaction => {
-        const filterText = transaction.querySelector(`td[data-filter="${selectedFilter}"]`).textContent.toLowerCase();
-        if (filterText.includes(searchTerm)) {
-            transaction.style.display = '';
+document.getElementById('transactionSearch').addEventListener('keydown', async function (event) {
+    if (event.key === "Enter") {
+        const value = this.value.trim();
+        if (currentFilterType && value) {
+            await displayUserTransactions(currentFilterType, value);
         } else {
-            transaction.style.display = 'none';
+            alert("Selecciona primero un tipo de filtro");
         }
-    });
+    }
 });
 
 // Event listener for date input
-document.getElementById('transactionDate').addEventListener('input', function () {
-    const selectedDate = this.value;
-    const transactions = document.querySelectorAll('#transactionsContainer tr');
+// document.getElementById('transactionDate').addEventListener('input', function () {
+//     const selectedDate = this.value;
+//     const transactions = document.querySelectorAll('#transactionsContainer tr');
+//
+//     transactions.forEach(transaction => {
+//         const transactionDate = transaction.querySelector(`td[data-filter="date"]`).textContent.split(' ')[0];
+//         if (transactionDate === selectedDate) {
+//             transaction.style.display = '';
+//         } else {
+//             transaction.style.display = 'none';
+//         }
+//     });
+// });
 
-    transactions.forEach(transaction => {
-        const transactionDate = transaction.querySelector(`td[data-filter="date"]`).textContent.split(' ')[0];
-        if (transactionDate === selectedDate) {
-            transaction.style.display = '';
-        } else {
-            transaction.style.display = 'none';
-        }
-    });
+document.getElementById('transactionDate').addEventListener('change', async function () {
+    const date = this.value;
+    if (currentFilterType === 'date' && date) {
+        await displayUserTransactions(currentFilterType, date);
+    }
 });
+
 
 function resetFilters() {
     const transactions = document.querySelectorAll('#transactionsContainer tr');
@@ -989,7 +1022,7 @@ $('#sendModal').on('show.bs.modal', function () {
 });
 
 document.getElementById('confirmSendToken').addEventListener('click', async function () {
-    const token =await getToken();
+    const token = await getToken();
     const symbol = document.getElementById('sendCryptoSelect').value;
     const amount = document.getElementById('sendAmount').value;
     const receiverAddress = document.getElementById('receiverAddress').value;
