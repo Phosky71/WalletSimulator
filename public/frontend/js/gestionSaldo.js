@@ -281,15 +281,19 @@ document.getElementById('confirmAddToken').addEventListener('click', addCryptocu
 
 async function displayUserCryptocurrencies(userCryptocurrencies) {
     const container = document.getElementById('cryptoCardsContainer');
-    container.innerHTML = ''; // Limpiar el contenedor
+    container.innerHTML = ''; 
 
-    const cryptoValues = await Promise.all(userCryptocurrencies.filter(crypto => crypto.amount >= 0).map(async crypto => {
-        const valueInDollars = await fetchCryptoValue(crypto.uid);
-        return {
-            ...crypto,
-            valueInDollars: valueInDollars * crypto.amount
-        };
-    }));
+    const cryptoValues = await Promise.all(
+        userCryptocurrencies.filter(crypto => crypto.amount >= 0).map(async crypto => {
+            try {
+                const valueInDollars = await fetchCryptoValue(crypto.uid);
+                return {...crypto, valueInDollars: valueInDollars * crypto.amount};
+            } catch (e) {
+                console.error(`Error fetching value for ${crypto.name}:`, e.message);
+                return {...crypto, valueInDollars: 0};
+            }
+        })
+    );
 
     cryptoValues.sort((a, b) => b.valueInDollars - a.valueInDollars);
 
@@ -746,10 +750,14 @@ const fetchPromises = {};
 
 async function fetchCryptoValue(uid) {
     const sessionKey = `cryptoValue_${uid}`;
-    const cachedValue = sessionStorage.getItem(sessionKey);
+    const cachedData = sessionStorage.getItem(sessionKey);
 
-    if (cachedValue) {
-        return parseFloat(cachedValue);
+    if (cachedData) {
+        const {price, timestamp} = JSON.parse(cachedData);
+        const now = Date.now();
+        if (now - timestamp < 5 * 60 * 1000) {
+            return parseFloat(price);
+        }
     }
 
     if (fetchPromises[uid]) {
@@ -757,31 +765,32 @@ async function fetchCryptoValue(uid) {
     }
 
     const token = await getToken();
+
     fetchPromises[uid] = fetch(`/api/crypto/cryptocurrencies`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
         body: JSON.stringify({uid})
-    }).then(response => {
-        if (response.ok) {
-            return response.json();
-        } else {
-            throw new Error('Failed to fetch cryptocurrency value');
+    }).then(async response => {
+        if (response.status === 429) { // Manejar específicamente error 429
+            throw new Error('API rate limit exceeded. Please wait.');
         }
-    }).then(data => {
-        const price = data.price;
-        sessionStorage.setItem(sessionKey, price);
+        if (!response.ok) throw new Error('Failed to fetch cryptocurrency value');
+
+        const data = await response.json();
+        const priceData = {price: data.price, timestamp: Date.now()};
+        sessionStorage.setItem(sessionKey, JSON.stringify(priceData));
         delete fetchPromises[uid];
-        return price;
+        return data.price;
+
     }).catch(error => {
         delete fetchPromises[uid];
+        console.error(error.message);
         throw error;
     });
 
     return fetchPromises[uid];
 }
+
 
 async function getToken() {
     try {
@@ -1131,7 +1140,7 @@ async function displayPortfolioValueChart() {
 
     const response = await fetch(`/api/users/balanceHistory?publicAddress=${publicAddress}`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
     });
 
     if (response.ok) {
@@ -1160,8 +1169,8 @@ async function displayPortfolioValueChart() {
                 scales: {
                     x: { // Configuración de la escala X
                         type: 'time', // Escala de tiempo
-                        time: { unit: 'day' }, // Agrupación por días
-                        adapters: { date: { locale: 'en-US' } }, // Opcional para configurar el idioma
+                        time: {unit: 'day'}, // Agrupación por días
+                        adapters: {date: {locale: 'en-US'}}, // Opcional para configurar el idioma
                         title: {
                             display: true,
                             text: 'Date'
@@ -1181,7 +1190,6 @@ async function displayPortfolioValueChart() {
         console.error('Failed to fetch balance history');
     }
 }
-
 
 
 // Obtener publicAddress del usuario actual
