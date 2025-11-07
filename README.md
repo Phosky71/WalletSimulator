@@ -216,10 +216,8 @@ This project demonstrates:
 - [ ] Add transaction categories and tags
 - [ ] Implement email notifications for transactions
 - [ ] Create admin dashboard for system monitoring
-- [ ] Add data visualization for portfolio performance
 - [ ] Implement two-factor authentication
 - [ ] Add support for more cryptocurrency APIs
-- [ ] Create mobile app version
 - [ ] Implement transaction limits and daily caps
 - [ ] Add multi-signature wallet support
 
